@@ -86,7 +86,7 @@ export function SharedDashboardClientView({
           </h1>
           
           <p className="text-xl sm:text-3xl font-light text-slate-400">
-            Sua parceria com a Autimex gerou <br className="hidden sm:block" />
+            Sua parceria com a Plastiron gerou <br className="hidden sm:block" />
             <span className="text-white font-bold">{fmtBRL(dashboardData.summary.totalRevenue)}</span> em negócios neste ano.
           </p>
 

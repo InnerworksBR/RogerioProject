@@ -202,7 +202,7 @@ export async function exportReport(
   XLSX.utils.book_append_sheet(wb, ws, SHEET_NAMES[reportType]);
 
   const date = new Date().toISOString().split('T')[0];
-  const filename = customFilename ?? `Autimex_${SHEET_NAMES[reportType]}_${date}.xlsx`;
+  const filename = customFilename ?? `Plastiron_${SHEET_NAMES[reportType]}_${date}.xlsx`;
   XLSX.writeFile(wb, filename);
 }
 
@@ -226,8 +226,8 @@ export async function exportAllReports(
 
   const date = new Date().toISOString().split('T')[0];
   const filename = clientName
-    ? `Autimex_${clientName.replace(/\s+/g, '_')}_${date}.xlsx`
-    : `Autimex_Relatorios_${date}.xlsx`;
+    ? `Plastiron_${clientName.replace(/\s+/g, '_')}_${date}.xlsx`
+    : `Plastiron_Relatorios_${date}.xlsx`;
 
   XLSX.writeFile(wb, filename);
 }

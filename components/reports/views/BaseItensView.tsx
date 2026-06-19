@@ -111,7 +111,7 @@ export function BaseItensView() {
         <ExportButton
           reportType="base_itens"
           data={data}
-          filename="Autimex_Base_Itens.xlsx"
+          filename="Plastiron_Base_Itens.xlsx"
         />
       </div>
 

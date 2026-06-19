@@ -109,7 +109,7 @@ export function BaseCompraView() {
         <ExportButton
           reportType="base_compra"
           data={data}
-          filename={`Autimex_Base_Compra_${selectedYear}.xlsx`}
+          filename={`Plastiron_Base_Compra_${selectedYear}.xlsx`}
         />
       </div>
 

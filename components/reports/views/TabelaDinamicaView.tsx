@@ -117,7 +117,7 @@ export function TabelaDinamicaView() {
         <ExportButton
           reportType="tabela_dinamica"
           data={data}
-          filename={`Autimex_Tabela_Dinamica_${selectedYear}.xlsx`}
+          filename={`Plastiron_Tabela_Dinamica_${selectedYear}.xlsx`}
         />
       </div>
 

@@ -7,8 +7,8 @@ const outfit = Outfit({ variable: '--font-outfit', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Autimex - Dashboard Comercial',
-  description: 'Dashboard de visita comercial e análise de vendas da Autimex',
+  title: 'Plastiron - Dashboard Comercial',
+  description: 'Dashboard de visita comercial e análise de vendas da Plastiron',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

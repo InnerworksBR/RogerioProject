@@ -14,7 +14,7 @@ export default function UploadPage() {
           Upload de planilhas
         </h1>
         <p className="text-lg text-slate-400">
-          Arraste o relatório exportado do Autimex para importar os dados de vendas.
+          Arraste o relatório exportado do Plastiron para importar os dados de vendas.
         </p>
       </div>
 
@@ -32,7 +32,7 @@ export default function UploadPage() {
         </div>
         <ul className="grid sm:grid-cols-2 gap-4">
           {[
-            'O arquivo deve ser exportado direto do Autimex (.xls ou .xlsx).',
+            'O arquivo deve ser exportado direto do Plastiron (.xls ou .xlsx).',
             'Somente linhas com situação LIQ são processadas para análise.',
             'Arquivos com até 100 mil linhas são processados em poucos segundos.',
             'Você pode enviar planilhas de meses ou anos diferentes para compor o histórico.'

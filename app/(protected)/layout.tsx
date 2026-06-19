@@ -51,12 +51,12 @@ export default async function ProtectedLayout({
             <div className="flex min-w-0 items-center gap-4 sm:gap-8">
               <Link href="/" className="group flex min-w-0 items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/20 text-lg font-bold text-indigo-400 border border-indigo-500/30 transition-transform group-hover:scale-110">
-                  A
+                  P
                 </div>
                 <span className="truncate text-lg font-bold tracking-tight text-white sm:text-xl">
-                  <span className="sm:hidden">Autimex</span>
+                  <span className="sm:hidden">Plastiron</span>
                   <span className="hidden sm:inline">
-                    Autimex{' '}
+                    Plastiron{' '}
                     <span className="font-medium text-indigo-600 dark:text-indigo-400">
                       Relatórios
                     </span>

@@ -89,7 +89,7 @@ export function BagagitosView() {
         <ExportButton
           reportType="bagagitos"
           data={data}
-          filename="Autimex_Bagagitos.xlsx"
+          filename="Plastiron_Bagagitos.xlsx"
         />
       </div>
 

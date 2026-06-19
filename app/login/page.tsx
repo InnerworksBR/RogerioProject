@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="glass-card rounded-[2rem] border border-white/60 p-8 shadow-2xl shadow-indigo-500/10">
           <div className="mb-8 space-y-4 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 text-2xl font-bold text-white shadow-lg shadow-indigo-500/20">
-              A
+              P
             </div>
             <div className="space-y-2">
               <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-500">

@@ -41,7 +41,7 @@ export default function ReportsPage() {
         <div className="relative z-10">
           <h1 className="text-4xl font-black tracking-tight mb-2">Relatórios <span className="text-indigo-400">Analíticos</span></h1>
           <p className="text-slate-400 max-w-md font-medium">
-            Explore os dados comerciais da Autimex com filtros avançados e exportação consolidada para Excel.
+            Explore os dados comerciais da Plastiron com filtros avançados e exportação consolidada para Excel.
           </p>
         </div>
         <div className="relative z-10">

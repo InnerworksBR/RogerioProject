@@ -148,7 +148,7 @@ export function GeralView() {
         <ExportButton
           reportType="geral"
           data={data.filter((row) => !row.isHeader)}
-          filename={`Autimex_Geral_${selectedYear}.xlsx`}
+          filename={`Plastiron_Geral_${selectedYear}.xlsx`}
         />
       </div>
 

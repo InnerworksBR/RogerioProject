@@ -89,7 +89,7 @@ export default function BagagitosPage() {
         <ExportButton
           reportType="bagagitos"
           data={data}
-          filename="Autimex_Bagagitos.xlsx"
+          filename="Plastiron_Bagagitos.xlsx"
         />
       </div>
 

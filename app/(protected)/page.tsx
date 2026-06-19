@@ -132,7 +132,7 @@ export default async function DashboardPage() {
           Visão Executiva <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">{latestYear}</span>
         </h1>
         <p className="max-w-2xl text-lg text-slate-400 leading-relaxed">
-          Monitoramento global de desempenho da Autimex. Os relatórios analíticos processam seus dados de vendas e transformam os padrões do ERP em insights imediatos.
+          Monitoramento global de desempenho da Plastiron. Os relatórios analíticos processam seus dados de vendas e transformam os padrões do ERP em insights imediatos.
         </p>
       </header>
 
