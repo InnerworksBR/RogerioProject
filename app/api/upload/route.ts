@@ -154,17 +154,10 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Metadados de upload invalidos.' }, { status: 400 });
   }
 
-  const { data: duplicate } = await supabase
-    .from('uploads')
-    .select('id, filename')
-    .eq('user_id', user.id)
-    .eq('fingerprint', body.fingerprint)
-    .maybeSingle();
-
-  if (duplicate) {
-    return NextResponse.json({ error: 'Este arquivo ja foi importado.', duplicate }, { status: 409 });
-  }
-
+  // Reimportacao do MESMO periodo (datas iguais) e permitida: a planilha nova
+  // substitui a anterior. A troca acontece em finalize_upload, que remove os
+  // uploads do periodo exato apos concluir o novo. Por isso nao bloqueamos por
+  // fingerprint nem tratamos o periodo exato como sobreposicao.
   const { data: overlaps, error: overlapError } = await supabase
     .from('uploads')
     .select('id, filename, period_start, period_end')
@@ -174,8 +167,14 @@ export async function PUT(req: NextRequest) {
     .gte('period_end', body.periodStart);
 
   if (overlapError) return NextResponse.json({ error: overlapError.message }, { status: 500 });
-  if ((overlaps?.length ?? 0) > 0 && !body.confirmOverlap) {
-    return NextResponse.json({ error: 'Periodo sobreposto.', overlaps }, { status: 409 });
+
+  // Sobreposicoes PARCIAIS (periodo diferente que cruza) ainda exigem confirmacao.
+  // O periodo exato e excluido porque sera substituido automaticamente.
+  const partialOverlaps = (overlaps ?? []).filter(
+    (item) => !(item.period_start === body.periodStart && item.period_end === body.periodEnd),
+  );
+  if (partialOverlaps.length > 0 && !body.confirmOverlap) {
+    return NextResponse.json({ error: 'Periodo sobreposto.', overlaps: partialOverlaps }, { status: 409 });
   }
 
   const { count: processingCount, error: processingError } = await supabase
@@ -204,9 +203,6 @@ export async function PUT(req: NextRequest) {
     .select('id')
     .single();
 
-  if (error?.code === '23505') {
-    return NextResponse.json({ error: 'Este arquivo ja foi importado.' }, { status: 409 });
-  }
   return error ? NextResponse.json({ error: error.message }, { status: 500 }) : NextResponse.json({ upload_id: data.id });
 }
 
