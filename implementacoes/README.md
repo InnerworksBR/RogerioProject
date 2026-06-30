@@ -43,6 +43,17 @@ Decomposição dos achados da auditoria completa pré-entrega em 8 implementaç�
 
 ---
 
+## Fluxo de Upload / Reimportação
+
+| Nº | Nome | Domínio | Prioridade | Status | Depende de |
+|----|------|---------|-----------|--------|-----------|
+| [015](./015-reimportacao-substituicao-periodo/spec.md) | Reimportação com Substituição por Período Exato | Upload/dados | 🟠 Alta | 🟢 Concluída (5/5)*** | migr. 0014 (integridade de upload) |
+
+\*** Código no `main` (`6a14c1f`). Requer deploy do código **e** aplicação da migration `0022` no
+Supabase de produção (SQL Editor) — ver [deploy-notes.md](./015-reimportacao-substituicao-periodo/deploy-notes.md).
+
+---
+
 ## Ordem de Execução Recomendada
 
 1. **006 — Corretude de Datas (🔴 PRIMEIRO).** Bloqueador de corretude: hoje vendas do dia 1º
