@@ -12,18 +12,13 @@ export function useEnsureReportYears() {
   useEffect(() => {
     let active = true;
 
-    if (availableYears.length > 0) {
-      if (!selectedYear || !availableYears.includes(selectedYear)) {
-        setYear(availableYears[availableYears.length - 1] ?? null);
-      }
-      setLoadingYears(false);
-      return () => {
-        active = false;
-      };
-    }
-
     async function loadYears() {
-      setLoadingYears(true);
+      // Rebusca sempre ao montar a tela para refletir uploads feitos na mesma
+      // sessão (a lista fica em memória e não recarregava sozinha). Só mostra o
+      // spinner quando não há nada em cache — assim a lista já carregada não pisca.
+      if (useFilterStore.getState().availableYears.length === 0) {
+        setLoadingYears(true);
+      }
       setYearsError(null);
 
       try {
@@ -32,8 +27,12 @@ export function useEnsureReportYears() {
 
         setAvailableYears(years);
 
+        // Preserva o ano selecionado se ainda existir; senão, cai no mais recente.
+        const current = useFilterStore.getState().selectedYear;
         if (years.length > 0) {
-          setYear(years[years.length - 1]);
+          if (!current || !years.includes(current)) {
+            setYear(years[years.length - 1]);
+          }
         } else {
           setYear(null);
         }
@@ -57,7 +56,8 @@ export function useEnsureReportYears() {
     return () => {
       active = false;
     };
-  }, [availableYears, selectedYear, setAvailableYears, setYear]);
+    // Setters do zustand são estáveis: o efeito roda uma vez por montagem da tela.
+  }, [setAvailableYears, setYear]);
 
   return {
     availableYears,
