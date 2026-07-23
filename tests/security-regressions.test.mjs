@@ -174,3 +174,9 @@ test('CSP allows the configured Supabase HTTP and WebSocket origins', async () =
   assert.match(proxy, /websocketProtocol/);
   assert.match(proxy, /configuredSupabaseSources/);
 });
+
+test('dashboard loads years with the authenticated server Supabase client', async () => {
+  const dashboard = await read('app/(protected)/page.tsx');
+  assert.match(dashboard, /getAvailableYearsForSupabase\(supabase\)/);
+  assert.doesNotMatch(dashboard, /@\/lib\/reportQueries/);
+});

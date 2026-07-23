@@ -12,8 +12,8 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { createServerSupabaseClient } from '@/lib/supabaseServer';
-import { getAvailableYears } from '@/lib/reportQueries';
 import { buildAIReportSummary } from '@/lib/server/aiSummary';
+import { getAvailableYearsForSupabase } from '@/lib/server/reportData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -22,7 +22,12 @@ export const fmtBRL = (value: number) =>
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient();
-  const years = await getAvailableYears();
+  let years: number[] = [];
+  try {
+    years = await getAvailableYearsForSupabase(supabase);
+  } catch (error) {
+    console.error('[DashboardPage] get_distinct_years error:', error);
+  }
   const latestYear = years.length > 0 ? years[years.length - 1] : new Date().getFullYear();
 
   const { data: { user } } = await supabase.auth.getUser();
