@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   AlertTriangle,
   ChevronDown,
@@ -17,67 +17,45 @@ import type { AIReportSummaryResponse } from '@/types/ai';
 export function ExecutiveSummaryCard() {
   const { selectedYear, selectedClient, selectedClientName } = useFilterStore();
   const [expanded, setExpanded] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AIReportSummaryResponse | null>(null);
 
   useEffect(() => {
-    let active = true;
+    setData(null);
+    setError(null);
+    setExpanded(true);
+  }, [selectedYear, selectedClient]);
 
-    if (!selectedYear) {
-      setLoading(false);
-      setData({ available: false, reason: 'missing_year' });
-      setError(null);
-      return () => {
-        active = false;
-      };
-    }
-
+  const generateSummary = useCallback(async () => {
+    if (!selectedYear) return;
     setLoading(true);
     setError(null);
 
-    fetch('/api/ai/report-summary', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        year: selectedYear,
-        codCliente: selectedClient,
-        scope: selectedClient ? 'client' : 'global',
-      }),
-    })
-      .then(async (response) => {
-        const json = (await response.json().catch(() => null)) as
+    try {
+      const response = await fetch('/api/ai/report-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          year: selectedYear,
+          codCliente: selectedClient,
+          scope: selectedClient ? 'client' : 'global',
+        }),
+      });
+      const json = (await response.json().catch(() => null)) as
           | AIReportSummaryResponse
           | { error?: string }
           | null;
-
-        if (!response.ok) {
-          throw new Error(json && 'error' in json ? json.error ?? 'Erro na IA.' : 'Erro na IA.');
-        }
-
-        if (active) {
-          setData(json as AIReportSummaryResponse);
-        }
-      })
-      .catch((fetchError: unknown) => {
-        if (active) {
-          setError(
-            fetchError instanceof Error
-              ? fetchError.message
-              : 'Não foi possível gerar o resumo executivo.'
-          );
-          setData(null);
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
+      if (!response.ok) {
+        throw new Error(json && 'error' in json ? json.error ?? 'Erro na IA.' : 'Erro na IA.');
+      }
+      setData(json as AIReportSummaryResponse);
+    } catch (fetchError: unknown) {
+      setError(fetchError instanceof Error ? fetchError.message : 'Não foi possível gerar o resumo executivo.');
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
   }, [selectedYear, selectedClient]);
 
   if (data?.reason === 'missing_api_key') {
@@ -97,8 +75,25 @@ export function ExecutiveSummaryCard() {
 
   if (error) {
     return (
-      <div className="rounded-[2rem] border border-rose-200 bg-rose-50 px-6 py-5 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">
-        Não foi possível gerar o resumo executivo: {error}
+      <div className="flex items-center justify-between gap-4 rounded-[2rem] border border-rose-200 bg-rose-50 px-6 py-5 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">
+        <span>Não foi possível gerar o resumo executivo: {error}</span>
+        <Button type="button" variant="outline" onClick={generateSummary}>Tentar novamente</Button>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="glass-card flex flex-col gap-4 rounded-[2rem] p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 font-bold text-slate-950 dark:text-white">
+            <Sparkles className="size-4 text-indigo-500" /> Resumo executivo com IA
+          </div>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Gerado somente quando solicitado para evitar consultas e consumo desnecessários.</p>
+        </div>
+        <Button type="button" onClick={generateSummary} disabled={!selectedYear} className="rounded-xl">
+          <Sparkles className="mr-2 size-4" /> Gerar resumo executivo
+        </Button>
       </div>
     );
   }

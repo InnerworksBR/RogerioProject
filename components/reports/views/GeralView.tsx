@@ -1,72 +1,30 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ExportButton } from '@/components/reports/ExportButton';
 import { ReportTable, type ColumnGroupHeader } from '@/components/reports/ReportTable';
-import { useEnsureReportYears } from '@/components/reports/useEnsureReportYears';
-import { getGeral } from '@/lib/reportQueries';
 import { useFilterStore } from '@/store/filterStore';
+import type { ReportViewProps } from '@/types/reportApi';
+import type { GeralRow } from '@/types/sales';
 
 // Branqueia apenas quando valor for exatamente 0 ou nulo. Negativos (devoluções) são exibidos.
 const fmt = (n: number | null | undefined) => (n != null && n !== 0 ? n.toLocaleString('pt-BR') : '');
 
-export function GeralView() {
-  const { selectedYear, selectedClient, selectedProduct, selectedSemester, selectedRevenueType } = useFilterStore();
-  const { loadingYears, yearsError } = useEnsureReportYears();
-  const [data, setData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    if (!selectedYear) {
-      setData([]);
-      setError(null);
-      setLoading(false);
-      return () => {
-        active = false;
-      };
-    }
-
-    setLoading(true);
-    setError(null);
-
-    getGeral(selectedYear, selectedClient ?? undefined, selectedProduct ?? undefined, selectedSemester ?? undefined, selectedRevenueType ?? undefined)
-      .then((rows) => {
-        if (!active) return;
-
-        const processed: any[] = [];
-        let lastCat = '';
-
-        rows.forEach((row) => {
-          if (row.categoria !== lastCat) {
-            processed.push({ isHeader: true, label: row.categoria });
-            lastCat = row.categoria;
-          }
-          processed.push(row);
-        });
-
-        setData(processed);
-      })
-      .catch((err: unknown) => {
-        console.error(err);
-        if (active) {
-          setError(err instanceof Error ? err.message : 'Erro ao carregar o relatório geral.');
-          setData([]);
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [selectedYear, selectedClient, selectedProduct, selectedSemester, selectedRevenueType]);
+export function GeralView({ rows, loading, error, truncated }: ReportViewProps<GeralRow>) {
+  const { selectedYear } = useFilterStore();
+  const data = useMemo<any[]>(() => {
+    const processed: any[] = [];
+    let lastCategory = '';
+    rows.forEach((row) => {
+      if (row.categoria !== lastCategory) {
+        processed.push({ isHeader: true, label: row.categoria });
+        lastCategory = row.categoria;
+      }
+      processed.push(row);
+    });
+    return processed;
+  }, [rows]);
 
   const columns = useMemo<ColumnDef<any>[]>(() => [
     {
@@ -152,22 +110,22 @@ export function GeralView() {
         />
       </div>
 
-      {(yearsError || error) && (
+      {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">
-          Erro ao carregar o relatório: {yearsError ?? error}
+          Erro ao carregar o relatório: {error}
         </div>
       )}
+
+      {truncated && <p className="text-xs text-amber-500">Resultado limitado para proteger o banco. Refine os filtros ou exporte o relatório completo.</p>}
 
       <ReportTable
         data={data}
         columns={columns}
-        loading={loadingYears || loading}
+        loading={loading}
         emptyMessage={
           selectedYear
             ? 'Nenhum item configurado para o relatório geral ou nenhum dado encontrado para o ano selecionado.'
-            : yearsError
-              ? 'Não foi possível carregar os anos disponíveis.'
-              : 'Nenhum ano disponível. Faça upload de um arquivo para gerar o relatório.'
+            : 'Nenhum ano disponível. Faça upload de um arquivo para gerar o relatório.'
         }
         stickyColumns={4}
         groupHeaders={groupHeaders}

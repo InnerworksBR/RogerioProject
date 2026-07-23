@@ -43,12 +43,22 @@ Decomposição dos achados da auditoria completa pré-entrega em 8 implementaç�
 
 ---
 
+## Acessos / Autogestão de Conta
+
+| Nº | Nome | Domínio | Prioridade | Status | Depende de |
+|----|------|---------|-----------|--------|-----------|
+| [014](./014-acessos-recuperacao-troca-senha/spec.md) | Acessos: Recuperação e Troca de Senha | Auth/acessos | 🟠 Alta | 🟢 Concluída (10/10)** | 001/008 (convite) |
+
+\** Código entregue e validado (`npm test`/`typecheck`/`build`); entrega de email depende de SMTP +
+Redirect URLs configurados no projeto Supabase (config de ambiente, fora do código).
+
+---
+
 ## Fluxo de Upload / Reimportação
 
 | Nº | Nome | Domínio | Prioridade | Status | Depende de |
 |----|------|---------|-----------|--------|-----------|
 | [015](./015-reimportacao-substituicao-periodo/spec.md) | Reimportação com Substituição por Período Exato | Upload/dados | 🟠 Alta | 🟢 Concluída (5/5)*** | migr. 0014 (integridade de upload) |
-| [016](./016-atualizacao-anos-disponiveis-relatorios/spec.md) | Atualização da Lista de Anos Disponíveis nos Relatórios | UX relatórios | 🟠 Alta | 🟢 Concluída (3/3) | — |
 
 \*** Código no `main` (`6a14c1f`). Requer deploy do código **e** aplicação da migration `0022` no
 Supabase de produção (SQL Editor) — ver [deploy-notes.md](./015-reimportacao-substituicao-periodo/deploy-notes.md).

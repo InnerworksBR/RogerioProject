@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Loader2, LogOut } from 'lucide-react';
+import { Loader2, LogOut, Settings } from 'lucide-react';
 import { getSupabaseClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 
@@ -40,6 +41,15 @@ export function UserMenu({ email }: { email: string }) {
       <div className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-slate-200 text-xs font-bold uppercase text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
         {getInitials(email)}
       </div>
+
+      <Link
+        href="/conta"
+        aria-label="Conta e segurança"
+        className="inline-flex h-9 items-center rounded-xl px-3 text-sm font-medium text-slate-500 transition-colors hover:bg-muted hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+      >
+        <Settings className="size-4 sm:mr-2" />
+        <span className="hidden sm:inline">Conta</span>
+      </Link>
 
       <Button
         variant="ghost"

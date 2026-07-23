@@ -3,6 +3,23 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
+function getConfiguredSupabaseCspSources(): string {
+  const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!configuredUrl) return '';
+
+  try {
+    const supabaseUrl = new URL(configuredUrl);
+    if (supabaseUrl.protocol !== 'https:' && supabaseUrl.protocol !== 'http:') {
+      return '';
+    }
+
+    const websocketProtocol = supabaseUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${supabaseUrl.origin} ${websocketProtocol}//${supabaseUrl.host}`;
+  } catch {
+    return '';
+  }
+}
+
 /**
  * Gera a CSP baseada em nonce para a requisição atual.
  * Em produção não inclui 'unsafe-eval'; em dev permite apenas para
@@ -11,13 +28,15 @@ const isDevelopment = process.env.NODE_ENV === 'development';
  * tornando 'unsafe-inline' desnecessário em produção.
  */
 function buildCsp(nonce: string): string {
+  const configuredSupabaseSources = getConfiguredSupabaseCspSources();
+
   return `
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDevelopment ? " 'unsafe-eval'" : ''};
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data:;
     font-src 'self' data:;
-    connect-src 'self' https://*.supabase.co wss://*.supabase.co${isDevelopment ? ' ws:' : ''};
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co ${configuredSupabaseSources}${isDevelopment ? ' ws:' : ''};
     worker-src 'self' blob:;
     object-src 'none';
     base-uri 'self';
@@ -76,7 +95,17 @@ export async function proxy(request: NextRequest) {
   const isApiRoute = pathname.startsWith('/api/');
   const isPublicSharePage = pathname.startsWith('/shared/client/');
   const isPublicShareApi = pathname === '/api/share/data';
-  const isPublicRoute = isLoginPage || isPublicSharePage || isPublicShareApi;
+  // Fluxo de acesso (recuperação/definição de senha) precisa ser acessível
+  // sem sessão: o usuário chega por link de email antes de estar autenticado.
+  const isAccessRecoveryRoute =
+    pathname === '/recuperar-senha' ||
+    pathname === '/redefinir-senha' ||
+    pathname === '/auth/callback';
+  const isPublicRoute =
+    isLoginPage ||
+    isPublicSharePage ||
+    isPublicShareApi ||
+    isAccessRecoveryRoute;
 
   if (!user && !isPublicRoute) {
     if (isApiRoute) {

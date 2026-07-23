@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ReportTable, type ColumnGroupHeader } from '@/components/reports/ReportTable';
 import { ExportButton } from '@/components/reports/ExportButton';
-import { useEnsureReportYears } from '@/components/reports/useEnsureReportYears';
-import { getTabelaDinamica } from '@/lib/reportQueries';
 import { useFilterStore } from '@/store/filterStore';
+import type { ReportViewProps } from '@/types/reportApi';
 import type { TabelaDinamicaRow } from '@/types/sales';
 
 // Branqueia apenas quando valor for exatamente 0 ou nulo. Negativos (devoluções) são exibidos.
@@ -14,51 +13,8 @@ const fmt = (n: number | null | undefined) => (n != null && n !== 0 ? n.toLocale
 const fmtBRL = (n: number | null | undefined) =>
   n != null && n !== 0 ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
 
-export function TabelaDinamicaView() {
-  const { selectedYear, selectedClient, selectedProduct, selectedSemester, selectedRevenueType } = useFilterStore();
-  const { loadingYears, yearsError } = useEnsureReportYears();
-  const [data, setData] = useState<TabelaDinamicaRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    if (!selectedYear) {
-      setData([]);
-      setError(null);
-      setLoading(false);
-      return () => {
-        active = false;
-      };
-    }
-
-    setLoading(true);
-    setError(null);
-
-    getTabelaDinamica(selectedYear, selectedClient ?? undefined, selectedProduct ?? undefined, selectedSemester ?? undefined, selectedRevenueType ?? undefined)
-      .then((rows) => {
-        if (active) {
-          setData(rows);
-        }
-      })
-      .catch((err: unknown) => {
-        console.error(err);
-        if (active) {
-          setError(err instanceof Error ? err.message : 'Erro ao carregar a tabela dinâmica.');
-          setData([]);
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [selectedYear, selectedClient, selectedProduct, selectedSemester, selectedRevenueType]);
+export function TabelaDinamicaView({ rows: data, loading, error, truncated }: ReportViewProps<TabelaDinamicaRow>) {
+  const { selectedYear } = useFilterStore();
 
   const columns = useMemo<ColumnDef<TabelaDinamicaRow>[]>(() => [
     { header: 'Cód. Cliente', accessorKey: 'cod_cliente', size: 100 },
@@ -121,22 +77,22 @@ export function TabelaDinamicaView() {
         />
       </div>
 
-      {(yearsError || error) && (
+      {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">
-          Erro ao carregar o relatório: {yearsError ?? error}
+          Erro ao carregar o relatório: {error}
         </div>
       )}
+
+      {truncated && <p className="text-xs text-amber-500">Resultado limitado para proteger o banco. Refine os filtros ou exporte o relatório completo.</p>}
 
       <ReportTable
         data={data}
         columns={columns}
-        loading={loadingYears || loading}
+        loading={loading}
         emptyMessage={
           selectedYear
             ? 'Nenhum dado disponível para os filtros selecionados.'
-            : yearsError
-              ? 'Não foi possível carregar os anos disponíveis.'
-              : 'Nenhum ano disponível. Faça upload de um arquivo para gerar o relatório.'
+            : 'Nenhum ano disponível. Faça upload de um arquivo para gerar o relatório.'
         }
         stickyColumns={4}
         groupHeaders={groupHeaders}

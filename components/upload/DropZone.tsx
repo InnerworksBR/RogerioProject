@@ -3,10 +3,11 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUploadStore } from '@/store/uploadStore';
 import { useFilterStore } from '@/store/filterStore';
 import { parseXLSFile, type ParseMetadata } from '@/lib/xlsParser';
-import { getAvailableYears } from '@/lib/reportQueries';
+import { reportQueryKeys } from '@/lib/client/reportApi';
 import { UploadProgress } from './UploadProgress';
 import { useConfirm } from '@/components/ui/use-confirm';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ function formatPeriod(date: string | null): string {
 
 export function DropZone() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const store = useUploadStore();
   const filterStore = useFilterStore();
   const [queuedFiles, setQueuedFiles] = useState<string[]>([]);
@@ -149,6 +151,7 @@ export function DropZone() {
         totalRows
       );
       setCompletedFiles((count) => count + 1);
+      await queryClient.invalidateQueries({ queryKey: reportQueryKeys.all });
       toast.success(`${file.name}: ${totalRows.toLocaleString('pt-BR')} linhas importadas.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro desconhecido';
@@ -162,7 +165,7 @@ export function DropZone() {
       store.setError(message);
       toast.error(`${file.name}: ${message}`);
     }
-  }, [createUpload, store]);
+  }, [createUpload, queryClient, store]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -181,22 +184,11 @@ export function DropZone() {
 
   const handleViewReports = useCallback(async () => {
     setIsNavigating(true);
-    try {
-      // Recarrega os anos disponíveis antes de navegar para evitar o empty state piscando.
-      const years = await getAvailableYears();
-      filterStore.setAvailableYears(years);
-      if (years.length > 0) {
-        filterStore.setYear(years[years.length - 1]);
-      } else {
-        filterStore.setYear(null);
-      }
-    } catch {
-      // Segue a navegação mesmo se falhar — useEnsureReportYears vai tentar de novo.
-      filterStore.setAvailableYears([]);
-      filterStore.setYear(null);
-    }
+    await queryClient.invalidateQueries({ queryKey: reportQueryKeys.all });
+    filterStore.setAvailableYears([]);
+    filterStore.setYear(null);
     router.push('/reports');
-  }, [filterStore, router]);
+  }, [filterStore, queryClient, router]);
 
   const isProcessing =
     store.status === 'parsing' ||

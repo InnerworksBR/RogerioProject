@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Autimex Reports após a spec 017",
+    "subtitle": "Arquitetura implementada para controlar fan-out, payload, cache e consumo do Supabase",
+    "output": "docs/architecture/autimex-supabase-after-spec-017.html",
+    "visual_preset": "blueprint",
+    "animation": "trace",
+    "quality_profile": "standard",
+    "viewBox": [1380, 880],
+    "views": [
+      {
+        "id": "carga-fria",
+        "label": "Carga fria coordenada",
+        "focus": ["usuario", "reports_ui", "query_cache", "reports_bff", "supabase_auth", "orchestrator", "supabase_db", "telemetry"],
+        "note": "Uma chamada HTTP de bootstrap coordena seis operações de dados e registra sua duração sem PII."
+      },
+      {
+        "id": "filtros-abas",
+        "label": "Filtros e aba ativa",
+        "focus": ["reports_ui", "query_cache", "reports_bff", "orchestrator", "supabase_db"],
+        "note": "Chaves completas, staleTime, deduplicação e AbortSignal mantêm somente a aba ativa consultando."
+      },
+      {
+        "id": "upload-invalida",
+        "label": "Upload e invalidação",
+        "focus": ["upload_ui", "upload_api", "supabase_db", "query_cache", "reports_ui"],
+        "note": "Após um upload concluído, todas as chaves reports ficam inválidas e o próximo acesso refaz o bootstrap."
+      },
+      {
+        "id": "acoes-explicitas",
+        "label": "Ações explícitas",
+        "focus": ["reports_ui", "ai_route", "openai", "supabase_db"],
+        "note": "IA e exportação não fazem parte da carga automática; ambas exigem ação do usuário."
+      }
+    ]
+  },
+  "components": [
+    { "id": "usuario", "type": "external", "label": "Usuário autenticado", "sublabel": "navegação e filtros", "pos": [35, 334], "size": [135, 64] },
+    { "id": "reports_ui", "type": "frontend", "label": "Tela /reports", "sublabel": "owner da aba e filtros", "pos": [220, 330], "size": [155, 72], "tag": "somente aba ativa" },
+    { "id": "query_cache", "type": "database", "label": "TanStack Query", "sublabel": "cache privado + dedupe", "pos": [405, 490], "size": [160, 66], "tag": "staleTime 2 min" },
+    { "id": "upload_ui", "type": "frontend", "label": "Fluxo de upload", "sublabel": "planilha em chunks", "pos": [220, 675], "size": [155, 66], "tag": "invalida reports" },
+    { "id": "reports_bff", "type": "backend", "label": "Route Handlers BFF", "sublabel": "bootstrap · query · options", "pos": [505, 330], "size": [175, 72], "tag": "auth + validação" },
+    { "id": "orchestrator", "type": "backend", "label": "Query Orchestrator", "sublabel": "limites + DTO + medição", "pos": [790, 330], "size": [175, 72], "tag": "server-only" },
+    { "id": "upload_api", "type": "backend", "label": "API de upload", "sublabel": "persistência controlada", "pos": [505, 675], "size": [175, 66] },
+    { "id": "ai_route", "type": "backend", "label": "Resumo executivo", "sublabel": "POST somente por clique", "pos": [505, 105], "size": [175, 66], "tag": "IA manual" },
+    { "id": "telemetry", "type": "cloud", "label": "Telemetria estruturada", "sublabel": "duração · linhas · status", "pos": [790, 190], "size": [175, 66], "tag": "sem PII" },
+    { "id": "openai", "type": "external", "label": "OpenAI", "sublabel": "resumo sob demanda", "pos": [1080, 105], "size": [165, 66] },
+    { "id": "supabase_db", "type": "database", "label": "Supabase PostgreSQL", "sublabel": "RPCs + sales_rows", "pos": [1080, 330], "size": [175, 72], "tag": "RLS do usuário" },
+    { "id": "supabase_auth", "type": "security", "label": "Supabase Auth", "sublabel": "sessão do request", "pos": [1080, 515], "size": [175, 66] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Navegador autenticado · cache não compartilhado entre usuários", "wraps": ["reports_ui", "query_cache", "upload_ui"], "pad": 28 },
+    { "kind": "security-group", "label": "Next.js 16 · fronteira autenticada do BFF", "wraps": ["reports_bff", "orchestrator", "upload_api", "ai_route", "telemetry"], "pad": 30 },
+    { "kind": "region", "label": "Projeto Supabase · políticas existentes preservadas", "wraps": ["supabase_db", "supabase_auth"], "pad": 28 }
+  ],
+  "connections": [
+    { "id": "usuario-abre-reports", "from": "usuario", "to": "reports_ui", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "ui-consulta-cache", "from": "reports_ui", "to": "query_cache", "label": "key completa", "variant": "emphasis", "fromSide": "bottom", "toSide": "left", "via": [[298, 445], [385, 445], [385, 523]], "labelAt": [342, 435] },
+    { "id": "ui-chama-bff", "from": "reports_ui", "to": "reports_bff", "label": "1× bootstrap", "variant": "emphasis" },
+    { "id": "bff-orquestra", "from": "reports_bff", "to": "orchestrator", "label": "request validado", "variant": "emphasis" },
+    { "id": "orchestrator-supabase", "from": "orchestrator", "to": "supabase_db", "label": "RPC limitada", "variant": "emphasis" },
+    { "id": "bff-autentica", "from": "reports_bff", "to": "supabase_auth", "label": "getUser", "variant": "security", "fromSide": "bottom", "toSide": "left", "via": [[593, 455], [1045, 455], [1045, 548]], "labelAt": [820, 445] },
+    { "id": "orchestrator-telemetria", "from": "orchestrator", "to": "telemetry", "label": "report_query", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
+    { "id": "upload-persistencia", "from": "upload_ui", "to": "upload_api", "label": "chunks", "variant": "emphasis" },
+    { "id": "upload-supabase", "from": "upload_api", "to": "supabase_db", "label": "grava dados", "variant": "security", "fromSide": "right", "toSide": "bottom", "via": [[720, 708], [1015, 708], [1015, 435], [1168, 435]], "labelAt": [865, 698] },
+    { "id": "upload-invalida-cache", "from": "upload_ui", "to": "query_cache", "label": "invalidate reports", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "via": [[298, 625], [485, 625]], "labelAt": [392, 615] },
+    { "id": "ui-pede-ia", "from": "reports_ui", "to": "ai_route", "label": "clique explícito", "variant": "dashed", "fromSide": "top", "toSide": "left", "via": [[298, 260], [465, 260], [465, 138]], "labelAt": [380, 250] },
+    { "id": "ia-openai", "from": "ai_route", "to": "openai", "label": "resumo", "variant": "dashed", "fromSide": "right", "toSide": "left", "via": [[720, 138], [1040, 138]], "labelAt": [880, 128] },
+    { "id": "ia-le-dados", "from": "ai_route", "to": "supabase_db", "label": "dados filtrados", "variant": "security", "fromSide": "bottom", "toSide": "top", "via": [[593, 185], [1168, 185]], "labelAt": [880, 175] },
+    { "id": "exportacao-legada", "from": "reports_ui", "to": "supabase_db", "label": "exportação completa · por clique", "variant": "dashed", "fromSide": "left", "toSide": "left", "via": [[185, 366], [185, 800], [1025, 800], [1025, 366]], "labelAt": [610, 790] }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Resultado da carga fria", "items": ["Antes: 13–17 operações Supabase estimadas", "Agora: 6 operações de dados no bootstrap", "Estimativa total: 7–8 incluindo autenticação", "Cache válido: 0 novas operações automáticas"] },
+    { "dot": "cyan", "title": "Controles implementados", "items": ["Somente a aba ativa consulta", "AbortSignal cancela respostas obsoletas", "UI: 10.000 linhas por padrão e máximo de 20.000", "Truncamento é informado e aparece na tela", "Clientes e produtos usam busca limitada com debounce"] },
+    { "dot": "rose", "title": "Exceções e risco residual", "items": ["Exportação consolidada continua completa e explícita", "Páginas individuais legadas ainda usam o fluxo antigo", "IA executa apenas após clique", "Métrica real de egress depende de observação após deploy"] }
+  ]
+}

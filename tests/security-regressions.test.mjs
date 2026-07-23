@@ -166,3 +166,11 @@ test('authenticated mutation routes enforce same-origin requests in production',
   assert.match(licenses, /requireSameOrigin\(req\)/);
   assert.match(seed, /requireSameOrigin\(request\)/);
 });
+
+test('CSP allows the configured Supabase HTTP and WebSocket origins', async () => {
+  const proxy = await read('proxy.ts');
+  assert.match(proxy, /process\.env\.NEXT_PUBLIC_SUPABASE_URL/);
+  assert.match(proxy, /supabaseUrl\.origin/);
+  assert.match(proxy, /websocketProtocol/);
+  assert.match(proxy, /configuredSupabaseSources/);
+});

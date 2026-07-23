@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ReportFilterBar } from '@/components/reports/ReportFilterBar';
 import { SummaryCards } from '@/components/reports/SummaryCards';
 import { ExecutiveSummaryCard } from '@/components/reports/ExecutiveSummaryCard';
@@ -24,6 +25,9 @@ import {
   getGeral 
 } from '@/lib/reportQueries';
 import { exportAllReports } from '@/lib/exportXlsx';
+import { reportQueryKeys, useReportQuery, useReportsBootstrap } from '@/lib/client/reportApi';
+import { DEFAULT_UI_ROW_LIMIT, type ParsedReportRequest, type ReportType } from '@/types/reportApi';
+import type { BaseDeCompraRow, ConfigReportRow, GeralRow, TabelaDinamicaRow } from '@/types/sales';
 
 import { TabelaDinamicaView } from '@/components/reports/views/TabelaDinamicaView';
 import { BaseCompraView } from '@/components/reports/views/BaseCompraView';
@@ -32,6 +36,62 @@ import { BagagitosView } from '@/components/reports/views/BagagitosView';
 import { GeralView } from '@/components/reports/views/GeralView';
 
 export default function ReportsPage() {
+  const queryClient = useQueryClient();
+  const [activeReport, setActiveReport] = useState<ReportType>('tabela_dinamica');
+  const {
+    selectedYear,
+    selectedClient,
+    selectedProduct,
+    selectedSemester,
+    selectedRevenueType,
+    setYear,
+    setAvailableYears,
+  } = useFilterStore();
+
+  const bootstrapRequest = useMemo<ParsedReportRequest>(() => ({
+    report: 'tabela_dinamica',
+    year: null,
+    client: null,
+    product: null,
+    semester: null,
+    revenueType: null,
+    limit: DEFAULT_UI_ROW_LIMIT,
+  }), []);
+  const bootstrap = useReportsBootstrap(bootstrapRequest);
+
+  useEffect(() => {
+    if (!bootstrap.data) return;
+    setAvailableYears(bootstrap.data.years);
+    if (selectedYear === null && bootstrap.data.selectedYear !== null) {
+      const seededRequest = { ...bootstrapRequest, year: bootstrap.data.selectedYear };
+      queryClient.setQueryData(reportQueryKeys.query(seededRequest), {
+        ...bootstrap.data.initialReport,
+        requestId: bootstrap.data.requestId,
+        summary: bootstrap.data.summary,
+      });
+      setYear(bootstrap.data.selectedYear);
+    }
+  }, [bootstrap.data, bootstrapRequest, queryClient, selectedYear, setAvailableYears, setYear]);
+
+  const reportRequest = useMemo<ParsedReportRequest>(() => ({
+    report: activeReport,
+    year: selectedYear,
+    client: selectedClient,
+    product: selectedProduct,
+    semester: selectedSemester,
+    revenueType: selectedRevenueType,
+    limit: DEFAULT_UI_ROW_LIMIT,
+  }), [activeReport, selectedYear, selectedClient, selectedProduct, selectedSemester, selectedRevenueType]);
+  const reportQuery = useReportQuery(reportRequest, bootstrap.isSuccess && selectedYear !== null);
+  const queryError = reportQuery.error instanceof Error
+    ? reportQuery.error.message
+    : bootstrap.error instanceof Error
+      ? bootstrap.error.message
+      : null;
+  const rows = reportQuery.data?.rows ?? [];
+  const loading = bootstrap.isPending || (selectedYear !== null && (reportQuery.isPending || reportQuery.isFetching));
+  const truncated = reportQuery.data?.truncated ?? false;
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center bg-slate-900 dark:bg-slate-900/50 p-8 rounded-[2rem] text-white shadow-2xl shadow-indigo-500/20 relative overflow-hidden">
@@ -50,15 +110,20 @@ export default function ReportsPage() {
       </div>
 
       {/* Global filters */}
-      <ReportFilterBar />
+      <ReportFilterBar
+        initialClients={bootstrap.data?.clients ?? []}
+        initialProducts={bootstrap.data?.products ?? []}
+        revenueTypes={bootstrap.data?.revenueTypes ?? []}
+        error={bootstrap.error instanceof Error ? bootstrap.error.message : null}
+      />
 
       {/* KPI cards */}
-      <SummaryCards />
+      <SummaryCards data={selectedYear ? reportQuery.data?.summary ?? bootstrap.data?.summary ?? null : null} loading={loading} error={queryError} />
       <ExecutiveSummaryCard />
 
       {/* Tabs Layout */}
       <div className="glass-card rounded-[2rem] p-6 lg:p-8">
-        <Tabs defaultValue="tabela-dinamica" className="w-full">
+        <Tabs value={activeReport.replace('_', '-')} onValueChange={(value) => setActiveReport(value.replace('-', '_') as ReportType)} className="w-full">
           <TabsList className="flex overflow-x-auto w-full bg-[#030712]/50 border border-white/5 p-1.5 rounded-2xl mb-8 space-x-1 custom-scrollbar">
             <TabsTrigger value="tabela-dinamica" className="whitespace-nowrap rounded-xl font-semibold py-3 px-6 data-[state=active]:bg-indigo-500/20 data-[state=active]:text-indigo-300 data-[state=active]:shadow-sm transition-all">
               <TrendingUp className="mr-2 h-4 w-4" />
@@ -83,19 +148,19 @@ export default function ReportsPage() {
           </TabsList>
 
           <TabsContent value="tabela-dinamica" className="mt-0 outline-none">
-            <TabelaDinamicaView />
+            <TabelaDinamicaView rows={rows as TabelaDinamicaRow[]} loading={loading} error={queryError} truncated={truncated} />
           </TabsContent>
           <TabsContent value="base-compra" className="mt-0 outline-none">
-            <BaseCompraView />
+            <BaseCompraView rows={rows as BaseDeCompraRow[]} loading={loading} error={queryError} truncated={truncated} />
           </TabsContent>
           <TabsContent value="base-itens" className="mt-0 outline-none">
-            <BaseItensView />
+            <BaseItensView rows={rows as ConfigReportRow[]} loading={loading} error={queryError} truncated={truncated} />
           </TabsContent>
           <TabsContent value="bagagitos" className="mt-0 outline-none">
-            <BagagitosView />
+            <BagagitosView rows={rows as ConfigReportRow[]} loading={loading} error={queryError} truncated={truncated} />
           </TabsContent>
           <TabsContent value="geral" className="mt-0 outline-none">
-            <GeralView />
+            <GeralView rows={rows as GeralRow[]} loading={loading} error={queryError} truncated={truncated} />
           </TabsContent>
         </Tabs>
       </div>

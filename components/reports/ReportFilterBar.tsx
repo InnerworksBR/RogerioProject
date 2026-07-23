@@ -5,11 +5,30 @@ import { Filter, X, Calendar as CalendarIcon, User as UserIcon } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Combobox, type ComboboxItem } from '@/components/ui/combobox';
-import { getClients, getRevenueTypes, searchProducts } from '@/lib/reportQueries';
+import { useReportOptions } from '@/lib/client/reportApi';
 import { useFilterStore } from '@/store/filterStore';
-import { useEnsureReportYears } from './useEnsureReportYears';
+import type { ReportOption } from '@/types/reportApi';
 
-export function ReportFilterBar() {
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [delayMs, value]);
+  return debouncedValue;
+}
+
+export function ReportFilterBar({
+  initialClients,
+  initialProducts,
+  revenueTypes,
+  error,
+}: {
+  initialClients: ReportOption[];
+  initialProducts: ReportOption[];
+  revenueTypes: string[];
+  error?: string | null;
+}) {
   const {
     selectedYear,
     selectedClient,
@@ -25,62 +44,14 @@ export function ReportFilterBar() {
     clearFilters,
     availableYears,
   } = useFilterStore();
-  const { yearsError } = useEnsureReportYears();
-
-  const [clients, setClients] = useState<{ cod_cliente: string; nome_cliente: string }[]>([]);
-  const [revenueTypes, setRevenueTypes] = useState<string[]>([]);
-  const [products, setProducts] = useState<{ cod_referencia: string; descr_produto: string }[]>([]);
-  const [productsLoading, setProductsLoading] = useState(false);
+  const [clientQuery, setClientQuery] = useState('');
   const [productQuery, setProductQuery] = useState('');
-
-  useEffect(() => {
-    let active = true;
-
-    getClients()
-      .then((data) => {
-        if (active) {
-          setClients(data);
-        }
-      })
-      .catch((error) => {
-        console.error('Erro ao carregar clientes:', error);
-        if (active) {
-          setClients([]);
-        }
-      });
-    getRevenueTypes().then((data) => active && setRevenueTypes(data)).catch(() => active && setRevenueTypes([]));
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Carregar produtos com debounce via searchProducts
-  useEffect(() => {
-    let active = true;
-    setProductsLoading(true);
-
-    const timer = setTimeout(() => {
-      searchProducts(productQuery, 40)
-        .then((data) => {
-          if (active) {
-            setProducts(data);
-            setProductsLoading(false);
-          }
-        })
-        .catch(() => {
-          if (active) {
-            setProducts([]);
-            setProductsLoading(false);
-          }
-        });
-    }, 300);
-
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [productQuery]);
+  const deferredClientQuery = useDebouncedValue(clientQuery, 300);
+  const deferredProductQuery = useDebouncedValue(productQuery, 300);
+  const clientsQuery = useReportOptions('clients', deferredClientQuery, 40, deferredClientQuery.trim().length > 0);
+  const productsQuery = useReportOptions('products', deferredProductQuery, 40, deferredProductQuery.trim().length > 0);
+  const clients = clientsQuery.data?.options ?? initialClients;
+  const products = productsQuery.data?.options ?? initialProducts;
 
   return (
     <div className="glass rounded-2xl p-6 shadow-xl shadow-indigo-500/5 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -141,30 +112,20 @@ export function ReportFilterBar() {
           <label htmlFor="filter-client" className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
             <UserIcon size={12} /> Cliente / Parceiro
           </label>
-          <Select
-            value={selectedClient ?? 'all'}
+          <Combobox
+            aria-label="Cliente / Parceiro"
+            placeholder="Pesquisar cliente..."
+            items={clients}
+            value={selectedClient}
+            onInputChange={setClientQuery}
             onValueChange={(value) => {
-              if (!value || value === 'all') {
-                setClient(null, null);
-                return;
-              }
-
-              const client = clients.find((item) => item.cod_cliente === value);
-              setClient(value, client?.nome_cliente ?? null);
+              const client = clients.find((item) => item.value === value);
+              setClient(value || null, client?.label ?? null);
             }}
-          >
-            <SelectTrigger id="filter-client" aria-label="Cliente / Parceiro" className="w-full bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 rounded-xl h-11 focus:ring-indigo-500/20">
-              <SelectValue placeholder="Pesquisar cliente..." />
-            </SelectTrigger>
-            <SelectContent className="max-h-[300px] rounded-xl border-slate-200 dark:border-slate-800 shadow-2xl">
-              <SelectItem value="all" className="font-medium">Todos os clientes</SelectItem>
-              {clients.map((client) => (
-                <SelectItem key={client.cod_cliente} value={client.cod_cliente} className="font-medium">
-                  {client.nome_cliente}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            emptyMessage={clientsQuery.isFetching ? 'Buscando clientes...' : 'Nenhum cliente encontrado.'}
+            inputGroupClassName="bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50"
+            inputClassName="h-11 rounded-xl"
+          />
         </div>
 
         <div className="space-y-2 min-w-[220px]">
@@ -174,15 +135,11 @@ export function ReportFilterBar() {
           <Combobox
             aria-label="Filtro de Produto"
             placeholder="Buscar por código ou descrição..."
-            items={products.map((p): ComboboxItem => ({
-              value: p.cod_referencia,
-              label: p.descr_produto || p.cod_referencia,
-              sublabel: p.cod_referencia,
-            }))}
+            items={products as ComboboxItem[]}
             value={selectedProduct ?? null}
             onInputChange={setProductQuery}
             onValueChange={(cod) => setProduct(cod || null)}
-            emptyMessage={productsLoading ? 'Buscando produtos...' : 'Nenhum produto encontrado.'}
+            emptyMessage={productsQuery.isFetching ? 'Buscando produtos...' : 'Nenhum produto encontrado.'}
             inputGroupClassName="bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50"
             inputClassName="h-11 rounded-xl"
           />
@@ -218,9 +175,9 @@ export function ReportFilterBar() {
         </div>
       )}
 
-      {yearsError && (
+      {error && (
         <p className="mt-4 text-xs font-medium text-amber-600 dark:text-amber-400">
-          Não foi possível carregar os anos automaticamente: {yearsError}
+          Não foi possível carregar os filtros automaticamente: {error}
         </p>
       )}
     </div>

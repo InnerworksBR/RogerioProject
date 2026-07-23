@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     // Invite the representative so they define their own password.
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${req.nextUrl.origin}/login`,
+      redirectTo: `${req.nextUrl.origin}/auth/callback?next=/redefinir-senha`,
       data: { name },
     });
 

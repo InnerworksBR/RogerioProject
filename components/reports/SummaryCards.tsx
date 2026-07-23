@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
   type LucideIcon,
   ArrowUpRight,
@@ -12,8 +11,6 @@ import {
   Users,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getDashboardSummary } from '@/lib/reportQueries';
-import { useFilterStore } from '@/store/filterStore';
 import type { DashboardSummary } from '@/types/sales';
 
 const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString('pt-BR');
@@ -95,39 +92,15 @@ function KPICardSkeleton() {
   );
 }
 
-export function SummaryCards() {
-  const { selectedYear, selectedClient, selectedProduct, selectedSemester, selectedRevenueType } = useFilterStore();
-  const [data, setData] = useState<DashboardSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    setLoading(true);
-    setError(null);
-
-    getDashboardSummary(selectedYear ?? undefined, selectedClient ?? undefined, selectedProduct ?? undefined, selectedSemester ?? undefined, selectedRevenueType ?? undefined)
-      .then((summary) => {
-        if (active) {
-          setData(summary);
-        }
-      })
-      .catch((err: unknown) => {
-        if (active) {
-          setError(err instanceof Error ? err.message : 'Erro ao carregar o resumo.');
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [selectedYear, selectedClient, selectedProduct, selectedSemester, selectedRevenueType]);
+export function SummaryCards({
+  data,
+  loading,
+  error,
+}: {
+  data: DashboardSummary | null;
+  loading: boolean;
+  error: string | null;
+}) {
 
   if (loading) {
     return (

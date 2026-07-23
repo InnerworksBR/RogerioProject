@@ -2,7 +2,13 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ReportConfigItem, ReportKey, ProductCatalogRow } from '@/types/config';
-import type { BaseDeCompraRow, DashboardSummary } from '@/types/sales';
+import type {
+  BaseDeCompraRow,
+  ConfigReportRow,
+  DashboardSummary,
+  GeralRow,
+  TabelaDinamicaRow,
+} from '@/types/sales';
 import type {
   ClientSalesRow,
   ClientDashboardSummaryRow,
@@ -38,14 +44,15 @@ function normalizeNumericFields<T extends Record<string, any>>(
 async function fetchAllRpcRows<T>(
   supabase: DbClient,
   rpcName: string,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
+  limit = 100_000
 ): Promise<T[]> {
   // We use a high limit instead of .range() pagination because these RPCs
   // run heavy aggregations. Paginating them forces the DB to run the
   // aggregation multiple times, causing statement timeouts.
   const { data, error } = await supabase
     .rpc(rpcName, params)
-    .limit(100000);
+    .limit(limit);
 
   if (error) {
     throw normalizeDbError(error);
@@ -83,7 +90,8 @@ export async function getBaseDeCompraForSupabase(
   codCliente?: string,
   codReferencia?: string,
   semestre?: 1 | 2,
-  revenueType?: string
+  revenueType?: string,
+  limit = 100_000
 ): Promise<BaseDeCompraRow[]> {
   return fetchAllRpcRows<BaseDeCompraRow>(supabase, 'base_de_compra', {
     p_ano: ano,
@@ -91,7 +99,79 @@ export async function getBaseDeCompraForSupabase(
     p_cod_referencia: codReferencia ?? null,
     p_semestre: semestre ?? null,
     p_descr_hist_financ: revenueType ?? null,
-  });
+  }, limit);
+}
+
+export async function getTabelaDinamicaForSupabase(
+  supabase: DbClient,
+  ano: number,
+  codCliente?: string,
+  codReferencia?: string,
+  semestre?: 1 | 2,
+  revenueType?: string,
+  limit = 100_000
+): Promise<TabelaDinamicaRow[]> {
+  return fetchAllRpcRows<TabelaDinamicaRow>(supabase, 'tabela_dinamica_geral', {
+    p_ano: ano,
+    p_cod_cliente: codCliente ?? null,
+    p_cod_referencia: codReferencia ?? null,
+    p_semestre: semestre ?? null,
+    p_descr_hist_financ: revenueType ?? null,
+  }, limit);
+}
+
+export async function getBaseDeItensForSupabase(
+  supabase: DbClient,
+  anos: number[],
+  codCliente?: string,
+  codReferencia?: string,
+  semestre?: 1 | 2,
+  revenueType?: string,
+  limit = 100_000
+): Promise<ConfigReportRow[]> {
+  return fetchAllRpcRows<ConfigReportRow>(supabase, 'base_de_itens', {
+    p_anos: anos,
+    p_cod_cliente: codCliente ?? null,
+    p_cod_referencia: codReferencia ?? null,
+    p_semestre: semestre ?? null,
+    p_descr_hist_financ: revenueType ?? null,
+  }, limit);
+}
+
+export async function getBagagitosForSupabase(
+  supabase: DbClient,
+  anos: number[],
+  codCliente?: string,
+  codReferencia?: string,
+  semestre?: 1 | 2,
+  revenueType?: string,
+  limit = 100_000
+): Promise<ConfigReportRow[]> {
+  return fetchAllRpcRows<ConfigReportRow>(supabase, 'bagagitos', {
+    p_anos: anos,
+    p_cod_cliente: codCliente ?? null,
+    p_cod_referencia: codReferencia ?? null,
+    p_semestre: semestre ?? null,
+    p_descr_hist_financ: revenueType ?? null,
+  }, limit);
+}
+
+export async function getGeralForSupabase(
+  supabase: DbClient,
+  ano: number,
+  codCliente?: string,
+  codReferencia?: string,
+  semestre?: 1 | 2,
+  revenueType?: string,
+  limit = 100_000
+): Promise<GeralRow[]> {
+  return fetchAllRpcRows<GeralRow>(supabase, 'geral', {
+    p_ano: ano,
+    p_cod_cliente: codCliente ?? null,
+    p_cod_referencia: codReferencia ?? null,
+    p_semestre: semestre ?? null,
+    p_descr_hist_financ: revenueType ?? null,
+  }, limit);
 }
 
 export async function getAvailableYearsForSupabase(
@@ -129,6 +209,53 @@ export async function findClientsForSupabase(
   }
 
   return (data ?? []) as { cod_cliente: string; nome_cliente: string }[];
+}
+
+export async function findProductsForSupabase(
+  supabase: DbClient,
+  search: string,
+  limit = 40
+): Promise<{ cod_referencia: string; descr_produto: string }[]> {
+  const boundedLimit = Math.min(Math.max(limit, 1), 100);
+  const { data, error } = await supabase
+    .rpc('product_catalog', {})
+    .limit(Math.min(boundedLimit * 5, 500));
+
+  if (error) throw normalizeDbError(error);
+
+  const query = search.trim().toLocaleLowerCase('pt-BR');
+  return ((data ?? []) as ProductCatalogRow[])
+    .filter((row) => {
+      if (!query) return true;
+      return row.cod_referencia?.toLocaleLowerCase('pt-BR').includes(query)
+        || row.descr_produto?.toLocaleLowerCase('pt-BR').includes(query);
+    })
+    .slice(0, boundedLimit)
+    .map((row) => ({
+      cod_referencia: row.cod_referencia,
+      descr_produto: row.descr_produto,
+    }));
+}
+
+export async function getRevenueTypesForSupabase(
+  supabase: DbClient,
+  limit = 100
+): Promise<string[]> {
+  const boundedLimit = Math.min(Math.max(limit, 1), 200);
+  const { data, error } = await supabase
+    .from('sales_rows')
+    .select('descr_hist_financ')
+    .not('descr_hist_financ', 'is', null)
+    .order('descr_hist_financ', { ascending: true })
+    .limit(1_000);
+
+  if (error) throw normalizeDbError(error);
+
+  return Array.from(new Set(
+    (data ?? [])
+      .map((row) => row.descr_hist_financ?.trim())
+      .filter((value): value is string => Boolean(value))
+  )).slice(0, boundedLimit);
 }
 
 export async function getTopClientsForSupabase(

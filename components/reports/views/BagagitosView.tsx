@@ -1,62 +1,18 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ExportButton } from '@/components/reports/ExportButton';
 import { ReportTable } from '@/components/reports/ReportTable';
-import { useEnsureReportYears } from '@/components/reports/useEnsureReportYears';
-import { getBagagitos } from '@/lib/reportQueries';
 import { useFilterStore } from '@/store/filterStore';
+import type { ReportViewProps } from '@/types/reportApi';
 import type { ConfigReportRow } from '@/types/sales';
 
 // Branqueia apenas quando valor for exatamente 0 ou nulo. Negativos (devoluções) são exibidos.
 const fmt = (n: number | null | undefined) => (n != null && n !== 0 ? n.toLocaleString('pt-BR') : '');
 
-export function BagagitosView() {
-  const { availableYears, selectedClient, selectedProduct, selectedSemester, selectedRevenueType } = useFilterStore();
-  const { loadingYears, yearsError } = useEnsureReportYears();
-  const [data, setData] = useState<ConfigReportRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    if (availableYears.length === 0) {
-      setData([]);
-      setError(null);
-      setLoading(false);
-      return () => {
-        active = false;
-      };
-    }
-
-    setLoading(true);
-    setError(null);
-
-    getBagagitos(availableYears, selectedClient ?? undefined, selectedProduct ?? undefined, selectedSemester ?? undefined, selectedRevenueType ?? undefined)
-      .then((rows) => {
-        if (active) {
-          setData(rows);
-        }
-      })
-      .catch((err: unknown) => {
-        console.error(err);
-        if (active) {
-          setError(err instanceof Error ? err.message : 'Erro ao carregar bagagitos.');
-          setData([]);
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [availableYears, selectedClient, selectedProduct, selectedSemester, selectedRevenueType]);
+export function BagagitosView({ rows: data, loading, error, truncated }: ReportViewProps<ConfigReportRow>) {
+  const { availableYears } = useFilterStore();
 
   const columns = useMemo<ColumnDef<ConfigReportRow>[]>(() => {
     const baseCols: ColumnDef<ConfigReportRow>[] = [
@@ -93,22 +49,22 @@ export function BagagitosView() {
         />
       </div>
 
-      {(yearsError || error) && (
+      {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">
-          Erro ao carregar o relatório: {yearsError ?? error}
+          Erro ao carregar o relatório: {error}
         </div>
       )}
+
+      {truncated && <p className="text-xs text-amber-500">Resultado limitado para proteger o banco. Refine os filtros ou exporte o relatório completo.</p>}
 
       <ReportTable
         data={data}
         columns={columns}
-        loading={loadingYears || loading}
+        loading={loading}
         emptyMessage={
           availableYears.length > 0
             ? 'Nenhum bagagito configurado para este relatório. Cadastre os produtos em Configurações.'
-            : yearsError
-              ? 'Não foi possível carregar os anos disponíveis.'
-              : 'Nenhum ano disponível. Faça upload de um arquivo para gerar o relatório.'
+            : 'Nenhum ano disponível. Faça upload de um arquivo para gerar o relatório.'
         }
         stickyColumns={3}
       />

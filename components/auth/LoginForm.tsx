@@ -95,6 +95,14 @@ export function LoginForm({ redirectedFrom = '/' }: LoginFormProps) {
             required
           />
         </div>
+        <div className="text-right">
+          <Link
+            href="/recuperar-senha"
+            className="text-xs font-semibold text-indigo-500 hover:text-indigo-400"
+          >
+            Esqueci minha senha
+          </Link>
+        </div>
       </div>
 
       {error && (

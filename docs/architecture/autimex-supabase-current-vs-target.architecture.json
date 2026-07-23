@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Autimex Reports — arquitetura atual vs. arquitetura alvo",
+    "subtitle": "Leitura do repositório em 23/07/2026 · foco no consumo anormal de Supabase",
+    "output": "docs/architecture/autimex-supabase-current-vs-target.html",
+    "visual_preset": "blueprint",
+    "animation": "none",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "hoje",
+        "label": "01 · Como está hoje",
+        "focus": ["current_user", "current_proxy", "current_next", "current_browser", "current_fanout", "current_supabase", "current_postgres"],
+        "note": "A mesma experiência combina renderização no servidor com consultas diretas do navegador ao Supabase."
+      },
+      {
+        "id": "consumo",
+        "label": "02 · Onde o consumo multiplica",
+        "focus": ["current_proxy", "current_next", "current_browser", "current_fanout", "current_supabase", "current_postgres", "current_openai"],
+        "note": "Fan-out, respostas grandes e falta de cache aparecem no código; a quota exata exige telemetria do Supabase."
+      },
+      {
+        "id": "alvo",
+        "label": "03 · Como deveria ser",
+        "focus": ["target_user", "target_ui", "target_bff", "target_cache", "target_supabase", "target_postgres"],
+        "note": "Uma camada de consulta centraliza autorização, deduplicação, cache e contratos de resposta antes do banco."
+      },
+      {
+        "id": "controles",
+        "label": "04 · Controles de quota",
+        "focus": ["target_bff", "target_cache", "target_upload", "target_observability", "target_supabase", "target_postgres"],
+        "note": "Uploads invalidam chaves afetadas; métricas tornam custo, volume e frequência observáveis por rota e tenant."
+      }
+    ]
+  },
+  "components": [
+    { "id": "current_user", "type": "external", "label": "Usuário", "sublabel": "navegação e filtros", "pos": [40, 190], "size": [130, 62] },
+    { "id": "current_proxy", "type": "security", "label": "Next Proxy", "sublabel": "auth.getUser por request", "pos": [220, 190], "size": [142, 62], "tag": "chamada Supabase" },
+    { "id": "current_next", "type": "backend", "label": "Next.js 16", "sublabel": "RSC + Route Handlers", "pos": [410, 190], "size": [150, 62], "tag": "sem cache de dados" },
+    { "id": "current_browser", "type": "frontend", "label": "Client Components", "sublabel": "useEffect + Zustand", "pos": [410, 350], "size": [150, 62], "tag": "consulta direta" },
+    { "id": "current_fanout", "type": "messagebus", "label": "Fan-out de consultas", "sublabel": "filtros, aba, KPI e IA", "pos": [620, 350], "size": [158, 62], "tag": "sem deduplicação" },
+    { "id": "current_supabase", "type": "cloud", "label": "Supabase API", "sublabel": "Auth + PostgREST + RPC", "pos": [840, 190], "size": [158, 62], "tag": "hot path" },
+    { "id": "current_postgres", "type": "database", "label": "PostgreSQL", "sublabel": "sales_rows + agregações", "pos": [1060, 190], "size": [158, 62], "tag": "scan + egress" },
+    { "id": "current_openai", "type": "external", "label": "OpenAI", "sublabel": "resumo executivo", "pos": [1060, 45], "size": [158, 62], "tag": "acionamento automático" },
+
+    { "id": "target_user", "type": "external", "label": "Usuário", "sublabel": "mesma experiência", "pos": [40, 720], "size": [130, 62] },
+    { "id": "target_ui", "type": "frontend", "label": "UI server-first", "sublabel": "aba ativa + debounce", "pos": [220, 720], "size": [142, 62], "tag": "lazy loading" },
+    { "id": "target_bff", "type": "backend", "label": "Query Orchestrator", "sublabel": "BFF por tenant e filtros", "pos": [410, 720], "size": [158, 62], "tag": "1 contrato por tela" },
+    { "id": "target_cache", "type": "database", "label": "Cache de leitura", "sublabel": "dedupe + TTL curto", "pos": [650, 590], "size": [158, 62], "tag": "tenant + filtros" },
+    { "id": "target_supabase", "type": "cloud", "label": "Supabase API", "sublabel": "acesso somente no servidor", "pos": [650, 780], "size": [158, 62], "tag": "miss controlado" },
+    { "id": "target_postgres", "type": "database", "label": "Postgres otimizado", "sublabel": "RPC agregada + índices", "pos": [890, 780], "size": [166, 62], "tag": "respostas limitadas" },
+    { "id": "target_upload", "type": "messagebus", "label": "Upload concluído", "sublabel": "evento de invalidação", "pos": [410, 895], "size": [158, 62], "tag": "sem cache obsoleto" },
+    { "id": "target_observability", "type": "external", "label": "Observabilidade", "sublabel": "queries, linhas, bytes, p95", "pos": [890, 590], "size": [166, 62], "tag": "alertas de orçamento" }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "HOJE · aplicação Next.js", "wraps": ["current_proxy", "current_next", "current_browser", "current_fanout"], "pad": 28 },
+    { "kind": "security-group", "label": "HOJE · projeto Supabase", "wraps": ["current_supabase", "current_postgres"], "pad": 28 },
+    { "kind": "region", "label": "ALVO · aplicação Next.js", "wraps": ["target_ui", "target_bff", "target_cache", "target_upload"], "pad": 28 },
+    { "kind": "security-group", "label": "ALVO · projeto Supabase", "wraps": ["target_supabase", "target_postgres"], "pad": 28 }
+  ],
+  "connections": [
+    { "id": "current-request", "from": "current_user", "to": "current_proxy", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "current-proxy-next", "from": "current_proxy", "to": "current_next" },
+    { "id": "current-hydration", "from": "current_next", "to": "current_browser", "label": "RSC + hidratação", "route": "straight", "fromSide": "bottom", "toSide": "top", "labelAt": [537, 266] },
+    { "id": "current-effects", "from": "current_browser", "to": "current_fanout", "label": "mount / filtro", "variant": "dashed", "labelAt": [590, 426] },
+    { "id": "current-direct-rpcs", "from": "current_fanout", "to": "current_supabase", "label": "RPCs concorrentes", "variant": "emphasis", "fromSide": "right", "toSide": "bottom", "route": "orthogonal-h", "labelDy": 18 },
+    { "id": "current-server-rpcs", "from": "current_next", "to": "current_supabase", "label": "auth + RPCs de servidor", "variant": "security" },
+    { "id": "current-db", "from": "current_supabase", "to": "current_postgres", "label": "SQL / resultados", "variant": "emphasis", "labelAt": [1029, 266] },
+    { "id": "current-ai", "from": "current_next", "to": "current_openai", "label": "resumo automático", "variant": "dashed", "fromSide": "top", "toSide": "left", "via": [[485, 130], [1020, 130], [1020, 76]], "labelAt": [750, 130] },
+
+    { "id": "target-request", "from": "target_user", "to": "target_ui", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "target-ui-bff", "from": "target_ui", "to": "target_bff", "label": "1 consulta por tela", "variant": "emphasis", "labelAt": [386, 796] },
+    { "id": "target-cache", "from": "target_bff", "to": "target_cache", "label": "cache hit / dedupe", "variant": "emphasis", "fromSide": "top", "toSide": "left", "via": [[489, 680], [610, 680], [610, 621]], "labelAt": [545, 680] },
+    { "id": "target-cache-miss", "from": "target_bff", "to": "target_supabase", "label": "miss com limite", "variant": "security", "fromSide": "right", "toSide": "left", "via": [[590, 751], [590, 811]], "labelAt": [590, 796] },
+    { "id": "target-db", "from": "target_supabase", "to": "target_postgres", "label": "payload agregado", "variant": "emphasis", "labelAt": [849, 856] },
+    { "id": "target-invalidate", "from": "target_upload", "to": "target_bff", "label": "invalidar tags", "variant": "dashed", "fromSide": "top", "toSide": "bottom", "labelDx": 52 },
+    { "id": "target-telemetry", "from": "target_bff", "to": "target_observability", "label": "custo por rota", "variant": "dashed", "fromSide": "top", "toSide": "top", "via": [[489, 550], [973, 550]], "labelAt": [730, 550] }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Evidência de fan-out",
+      "items": [
+        "/reports busca anos no filtro e novamente na aba ativa",
+        "Filtros disparam catálogos separados; a aba ativa, KPI e IA consultam em paralelo",
+        "Carga fria estimada: ~13–17 operações Supabase, conforme IA e sessão"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Amplificadores de limite",
+      "items": [
+        "RPCs de relatório aceitam até 100.000 linhas por resposta",
+        "Fallbacks podem ler 10.000 linhas; histórico percorre páginas até o fim",
+        "Não há cache compartilhado, dedupe, orçamento ou métricas por rota"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ordem recomendada",
+      "items": [
+        "1. Instrumentar antes/depois: chamadas, linhas, bytes, duração e cache hit",
+        "2. Centralizar leitura no servidor; aba ativa e respostas agregadas/limitadas",
+        "3. Cache por tenant+filtros, invalidado somente após upload confirmado"
+      ]
+    }
+  ]
+}
