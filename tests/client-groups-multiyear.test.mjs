@@ -106,6 +106,24 @@ test('report filters and exports expose the complete bounded multi-year flow', a
   assert.match(exporter, /'Período', 'Status'/);
 });
 
+test('period summaries avoid duplicate year scans and report queries limit database contention', async () => {
+  const migration = await read('supabase/migrations/0025_dashboard_period_summary_performance.sql');
+  const reportData = await read('lib/server/reportData.ts');
+  const legacyQueries = await read('lib/reportQueries.ts');
+  const orchestrator = await read('lib/server/reportQueryOrchestrator.ts');
+
+  assert.match(migration, /CREATE OR REPLACE FUNCTION dashboard_period_summary/);
+  assert.match(migration, /WHERE sales\.ano = p_ano/);
+  assert.match(migration, /SECURITY INVOKER \(padrao\)/);
+  assert.doesNotMatch(migration, /ARRAY\(SELECT DISTINCT/);
+  assert.match(migration, /REVOKE ALL ON FUNCTION dashboard_period_summary/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION dashboard_period_summary[\s\S]*TO authenticated/);
+  assert.match(reportData, /rpc\('dashboard_period_summary'/);
+  assert.match(legacyQueries, /rpc\('dashboard_period_summary'/);
+  assert.match(orchestrator, /for \(const year of request\.years\)/);
+  assert.doesNotMatch(orchestrator, /Promise\.all\(request\.years\.map/);
+});
+
 test('uploads require destructive confirmation and expose per-file results', async () => {
   const route = await read('app/api/upload/route.ts');
   const dropZone = await read('components/upload/DropZone.tsx');

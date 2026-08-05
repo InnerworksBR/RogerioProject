@@ -118,7 +118,7 @@ export async function getDashboardSummary(
   semestre?: 1 | 2,
   revenueType?: string
 ): Promise<DashboardSummary | null> {
-  const { data, error } = await db().rpc('dashboard_summary', {
+  const { data, error } = await db().rpc('dashboard_period_summary', {
     p_ano: (ano && !isNaN(ano)) ? ano : null,
     p_cod_cliente: codCliente || null,
     p_cod_referencia: codReferencia ?? null,

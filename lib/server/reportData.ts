@@ -69,7 +69,7 @@ export async function getDashboardSummaryForSupabase(
   semestre?: 1 | 2,
   revenueType?: string
 ): Promise<DashboardSummary | null> {
-  const { data, error } = await supabase.rpc('dashboard_summary', {
+  const { data, error } = await supabase.rpc('dashboard_period_summary', {
     p_ano: ano ?? null,
     p_cod_cliente: codCliente ?? null,
     p_cod_referencia: codReferencia ?? null,

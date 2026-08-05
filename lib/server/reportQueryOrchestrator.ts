@@ -52,21 +52,31 @@ async function getSummaries(
   requestId: string,
   request: ParsedReportRequest
 ): Promise<ReportYearSummary[]> {
-  return Promise.all(request.years.map(async (year) => ({
-    year,
-    summary: await measureQuery(
-      { requestId, operation: 'reports.summary' },
-      () => getDashboardSummaryForSupabase(
-        supabase,
-        year,
-        request.client ?? undefined,
-        request.product ?? undefined,
-        request.semester ?? undefined,
-        request.revenueType ?? undefined
+  const summaries: ReportYearSummary[] = [];
+
+  // O banco de producao possui um statement_timeout curto. Disparar uma
+  // agregacao completa por ano ao mesmo tempo aumenta a contencao e faz
+  // consultas individualmente validas expirarem. Mantemos no maximo uma
+  // agregacao de resumo ativa por requisicao.
+  for (const year of request.years) {
+    summaries.push({
+      year,
+      summary: await measureQuery(
+        { requestId, operation: 'reports.summary' },
+        () => getDashboardSummaryForSupabase(
+          supabase,
+          year,
+          request.client ?? undefined,
+          request.product ?? undefined,
+          request.semester ?? undefined,
+          request.revenueType ?? undefined
+        ),
+        rowCount
       ),
-      rowCount
-    ),
-  })));
+    });
+  }
+
+  return summaries;
 }
 
 export async function executeReportQuery(
@@ -84,26 +94,36 @@ export async function executeReportQuery(
     { requestId, operation: `report.${request.report}` },
     async () => {
       switch (request.report) {
-        case 'tabela_dinamica':
-          return (await Promise.all(request.years.map((year) => getTabelaDinamicaForSupabase(
-            supabase,
-            year,
-            request.client ?? undefined,
-            request.product ?? undefined,
-            request.semester ?? undefined,
-            request.revenueType ?? undefined,
-            limit
-          )))).flat();
-        case 'base_compra':
-          return (await Promise.all(request.years.map((year) => getBaseDeCompraForSupabase(
-            supabase,
-            year,
-            request.client ?? undefined,
-            request.product ?? undefined,
-            request.semester ?? undefined,
-            request.revenueType ?? undefined,
-            limit
-          )))).flat();
+        case 'tabela_dinamica': {
+          const rowsByYear = [];
+          for (const year of request.years) {
+            rowsByYear.push(await getTabelaDinamicaForSupabase(
+              supabase,
+              year,
+              request.client ?? undefined,
+              request.product ?? undefined,
+              request.semester ?? undefined,
+              request.revenueType ?? undefined,
+              limit
+            ));
+          }
+          return rowsByYear.flat();
+        }
+        case 'base_compra': {
+          const rowsByYear = [];
+          for (const year of request.years) {
+            rowsByYear.push(await getBaseDeCompraForSupabase(
+              supabase,
+              year,
+              request.client ?? undefined,
+              request.product ?? undefined,
+              request.semester ?? undefined,
+              request.revenueType ?? undefined,
+              limit
+            ));
+          }
+          return rowsByYear.flat();
+        }
         case 'base_itens':
           return getBaseDeItensForSupabase(
             supabase,
@@ -124,8 +144,9 @@ export async function executeReportQuery(
             request.revenueType ?? undefined,
             limit
           );
-        case 'geral':
-          return (await Promise.all(request.years.map(async (year) => {
+        case 'geral': {
+          const rowsByYear = [];
+          for (const year of request.years) {
             const annualRows = await getGeralForSupabase(
               supabase,
               year,
@@ -135,8 +156,10 @@ export async function executeReportQuery(
               request.revenueType ?? undefined,
               limit
             );
-            return annualRows.map((row) => ({ ...row, ano: year }));
-          }))).flat();
+            rowsByYear.push(annualRows.map((row) => ({ ...row, ano: year })));
+          }
+          return rowsByYear.flat();
+        }
       }
     },
     rowCount
@@ -162,7 +185,7 @@ export async function getReportsBootstrap(
   const selectedYear = selectedYears.at(-1) ?? null;
   const effectiveRequest = { ...request, year: selectedYear, years: selectedYears };
 
-  const [clients, products, revenueTypes, summaries, initialReport] = await Promise.all([
+  const [clients, products, revenueTypes] = await Promise.all([
     measureQuery(
       { requestId, operation: 'reports.clients' },
       () => findClientsForSupabase(supabase, '', 40),
@@ -178,6 +201,11 @@ export async function getReportsBootstrap(
       () => getRevenueTypesForSupabase(supabase),
       rowCount
     ),
+  ]);
+
+  // As opcoes fazem leituras amplas. So iniciamos as agregacoes principais
+  // depois que elas terminam para nao saturar o pool pequeno do Postgres.
+  const [summaries, initialReport] = await Promise.all([
     getSummaries(supabase, requestId, effectiveRequest),
     executeReportQuery(supabase, requestId, effectiveRequest, years),
   ]);
