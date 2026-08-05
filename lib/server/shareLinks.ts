@@ -177,6 +177,59 @@ export async function resolveSharedClientData(token: string) {
   if (error) throw new Error(error.message);
   if (!shareLink) return null;
 
+  const { data: creator, error: creatorError } = await supabase
+    .from('profiles')
+    .select('role,leader_id')
+    .eq('id', shareLink.user_id)
+    .single();
+  if (creatorError || !creator) throw new Error(creatorError?.message ?? 'Creator profile not found.');
+  const accountOwnerId = creator.role === 'leader'
+    ? shareLink.user_id
+    : creator.leader_id ?? shareLink.user_id;
+  const ownerIds = [shareLink.user_id as string];
+  if (creator.role === 'leader') {
+    const { data: reps, error: repsError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('leader_id', shareLink.user_id);
+    if (repsError) throw new Error(repsError.message);
+    ownerIds.push(...(reps ?? []).map((rep) => rep.id as string));
+  }
+
+  let clientCodes = [shareLink.client_id as string];
+  let canonicalName: string | null = null;
+  const rawGroupId = (shareLink.client_id as string).startsWith('group:')
+    ? (shareLink.client_id as string).slice(6)
+    : null;
+  let groupId = rawGroupId;
+  if (!groupId) {
+    const { data: member } = await supabase
+      .from('client_group_members')
+      .select('group_id')
+      .eq('account_owner_id', accountOwnerId)
+      .eq('cod_cliente', shareLink.client_id)
+      .maybeSingle();
+    groupId = member?.group_id ?? null;
+  }
+  if (groupId) {
+    const [{ data: members, error: membersError }, { data: group, error: groupError }] = await Promise.all([
+      supabase
+        .from('client_group_members')
+        .select('cod_cliente')
+        .eq('account_owner_id', accountOwnerId)
+        .eq('group_id', groupId),
+      supabase
+        .from('client_groups')
+        .select('name')
+        .eq('account_owner_id', accountOwnerId)
+        .eq('id', groupId)
+        .single(),
+    ]);
+    if (membersError || groupError) throw new Error(membersError?.message ?? groupError?.message);
+    clientCodes = (members ?? []).map((member) => member.cod_cliente as string);
+    canonicalName = group?.name ?? null;
+  }
+
   const year = Number(shareLink.year);
   // Escopo do link público: apenas o ano compartilhado e o anterior (para o
   // comparativo). Não buscamos histórico vitalício — decisão do cliente
@@ -189,13 +242,14 @@ export async function resolveSharedClientData(token: string) {
         codigo_pedido, numero_pedido_talao, pedido_cliente_opc,
         quantidade, valor_total, ano, mes
       `)
-      .eq('user_id', shareLink.user_id)
-      .eq('cod_cliente', shareLink.client_id)
+      .in('user_id', ownerIds)
+      .in('cod_cliente', clientCodes)
       .in('ano', [year, year - 1])
       .range(from, to)
   );
 
-  return buildSharedDashboard(shareLink.client_id as string, year, rows);
+  const dashboard = buildSharedDashboard(shareLink.client_id as string, year, rows);
+  return canonicalName ? { ...dashboard, clientName: canonicalName } : dashboard;
 }
 
 export function getShareLinkExpiry() {

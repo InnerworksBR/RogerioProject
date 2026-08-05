@@ -2,7 +2,7 @@
 
 import * as XLSX from 'xlsx';
 import type { TabelaDinamicaRow, BaseDeCompraRow, ConfigReportRow, GeralRow } from '@/types/sales';
-import { MONTH_KEYS, MONTH_LABELS } from '@/types/sales';
+import { MONTH_LABELS } from '@/types/sales';
 
 export type ReportType = 'tabela_dinamica' | 'base_compra' | 'base_itens' | 'bagagitos' | 'geral';
 export type ReportData =
@@ -28,12 +28,12 @@ function numOrBlank(n: number | null | undefined): number | string {
 
 // ─── Tabela Dinâmica ──────────────────────────────────────────────────────────
 function buildTabelaDinamicaSheet(rows: TabelaDinamicaRow[]): XLSX.WorkSheet {
-  const headers = ['Cód. Cliente', 'Cliente', 'Cód. Ref.', 'Descrição Produto', ...MONTH_LABELS, 'Total Ano', 'Total (R$)'];
+  const headers = ['Ano', 'Cód. Cliente', 'Cliente', 'Cód. Ref.', 'Descrição Produto', ...MONTH_LABELS, 'Total Ano', 'Total (R$)'];
   const aoa: (string | number)[][] = [headers];
 
   for (const r of rows) {
     aoa.push([
-      r.cod_cliente, r.nome_cliente, r.cod_referencia, r.descr_produto,
+      r.ano, r.cod_cliente, r.nome_cliente, r.cod_referencia, r.descr_produto,
       numOrBlank(r.jan), numOrBlank(r.fev), numOrBlank(r.mar), numOrBlank(r.abr),
       numOrBlank(r.mai), numOrBlank(r.jun), numOrBlank(r.jul), numOrBlank(r.ago),
       numOrBlank(r.set_), numOrBlank(r.out_), numOrBlank(r.nov), numOrBlank(r.dez),
@@ -43,22 +43,22 @@ function buildTabelaDinamicaSheet(rows: TabelaDinamicaRow[]): XLSX.WorkSheet {
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = [
-    { wch: 12 }, { wch: 40 }, { wch: 12 }, { wch: 40 },
+    { wch: 8 }, { wch: 12 }, { wch: 40 }, { wch: 12 }, { wch: 40 },
     ...Array(12).fill({ wch: 7 }),
     { wch: 10 }, { wch: 14 },
   ];
-  ws['!freeze'] = { xSplit: 4, ySplit: 1 };
+  ws['!freeze'] = { xSplit: 5, ySplit: 1 };
   return ws;
 }
 
 // ─── Base de Compra ───────────────────────────────────────────────────────────
 function buildBaseDeCompraSheet(rows: BaseDeCompraRow[]): XLSX.WorkSheet {
-  const headers = ['Cód. Ref.', 'Descrição Produto', ...MONTH_LABELS, 'Total Ano'];
+  const headers = ['Ano', 'Cód. Ref.', 'Descrição Produto', ...MONTH_LABELS, 'Total Ano'];
   const aoa: (string | number)[][] = [headers];
 
   for (const r of rows) {
     aoa.push([
-      r.cod_referencia, r.descr_produto,
+      r.ano, r.cod_referencia, r.descr_produto,
       numOrBlank(r.jan), numOrBlank(r.fev), numOrBlank(r.mar), numOrBlank(r.abr),
       numOrBlank(r.mai), numOrBlank(r.jun), numOrBlank(r.jul), numOrBlank(r.ago),
       numOrBlank(r.set_), numOrBlank(r.out_), numOrBlank(r.nov), numOrBlank(r.dez),
@@ -67,8 +67,8 @@ function buildBaseDeCompraSheet(rows: BaseDeCompraRow[]): XLSX.WorkSheet {
   }
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{ wch: 12 }, { wch: 40 }, ...Array(12).fill({ wch: 7 }), { wch: 10 }];
-  ws['!freeze'] = { xSplit: 2, ySplit: 1 };
+  ws['!cols'] = [{ wch: 8 }, { wch: 12 }, { wch: 40 }, ...Array(12).fill({ wch: 7 }), { wch: 10 }];
+  ws['!freeze'] = { xSplit: 3, ySplit: 1 };
   return ws;
 }
 
@@ -133,7 +133,7 @@ function buildBagagitosSheet(rows: ConfigReportRow[]): XLSX.WorkSheet {
 // ─── Geral ────────────────────────────────────────────────────────────────────
 function buildGeralSheet(rows: GeralRow[]): XLSX.WorkSheet {
   const headers = [
-    'Status', 'EMB', 'Plastiron', 'Descrição', 'Ano', 'Aplicação', 'Cor', 'Outros Dados',
+    'Período', 'Status', 'EMB', 'Plastiron', 'Descrição', 'Ano', 'Aplicação', 'Cor', 'Outros Dados',
     'Categoria', ...MONTH_LABELS, 'Total Ano',
   ];
   const aoa: (string | number)[][] = [headers];
@@ -141,11 +141,13 @@ function buildGeralSheet(rows: GeralRow[]): XLSX.WorkSheet {
   let lastCategoria = '';
   for (const r of rows) {
     // Category header row
-    if (r.categoria !== lastCategoria) {
-      aoa.push([r.categoria]);
-      lastCategoria = r.categoria;
+    const categoryKey = `${r.ano}:${r.categoria}`;
+    if (categoryKey !== lastCategoria) {
+      aoa.push([`${r.ano} · ${r.categoria}`]);
+      lastCategoria = categoryKey;
     }
     aoa.push([
+      r.ano,
       r.extra_data?.status ?? '',
       r.extra_data?.emb ?? '',
       r.extra_data?.plastiron ?? '',
@@ -164,11 +166,11 @@ function buildGeralSheet(rows: GeralRow[]): XLSX.WorkSheet {
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws['!cols'] = [
-    { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 40 }, { wch: 6 },
+    { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 40 }, { wch: 6 },
     { wch: 20 }, { wch: 10 }, { wch: 15 }, { wch: 30 },
     ...Array(12).fill({ wch: 7 }), { wch: 10 },
   ];
-  ws['!freeze'] = { xSplit: 4, ySplit: 1 };
+  ws['!freeze'] = { xSplit: 5, ySplit: 1 };
   return ws;
 }
 

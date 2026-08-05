@@ -159,7 +159,7 @@ export function ReportTable<T>({
                       key={`group-empty-${colIdx}`}
                       className={`
                         px-4 py-2 border-b-2 border-slate-100 dark:border-white/5
-                        ${colIdx < stickyColumns ? 'sticky bg-white dark:bg-[#030712] z-30' : ''}
+                        ${colIdx < stickyColumns ? 'md:sticky bg-white dark:bg-[#030712] z-30' : ''}
                       `}
                       style={getColumnStyle(colIdx, col.getSize(), true)}
                     />
@@ -177,7 +177,7 @@ export function ReportTable<T>({
                     className={`
                       px-4 py-3 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400
                       uppercase tracking-[0.15em] whitespace-nowrap border-b border-slate-200 dark:border-white/5
-                      ${colIdx < stickyColumns ? 'sticky bg-white dark:bg-[#030712] shadow-[6px_0_12px_-8px_rgba(15,23,42,0.28)] dark:shadow-[6px_0_12px_-8px_rgba(0,0,0,0.8)] dark:border-r z-30' : ''}
+                      ${colIdx < stickyColumns ? 'md:sticky bg-white dark:bg-[#030712] shadow-[6px_0_12px_-8px_rgba(15,23,42,0.28)] dark:shadow-[6px_0_12px_-8px_rgba(0,0,0,0.8)] dark:border-r z-30' : ''}
                     `}
                     style={getColumnStyle(colIdx, header.getSize(), true)}
                   >
@@ -212,9 +212,10 @@ export function ReportTable<T>({
                       key={cell.id}
                       className={`
                         px-4 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium truncate
-                        ${colIdx < stickyColumns ? 'sticky bg-white dark:bg-[#030712] shadow-[6px_0_12px_-8px_rgba(15,23,42,0.18)] dark:shadow-[6px_0_12px_-8px_rgba(0,0,0,0.8)] dark:border-r dark:border-white/5 group-hover:bg-indigo-50/30 group-hover:dark:bg-[#080d1e] z-20' : ''}
+                        ${colIdx < stickyColumns ? 'md:sticky bg-white dark:bg-[#030712] shadow-[6px_0_12px_-8px_rgba(15,23,42,0.18)] dark:shadow-[6px_0_12px_-8px_rgba(0,0,0,0.8)] dark:border-r dark:border-white/5 group-hover:bg-indigo-50/30 group-hover:dark:bg-[#080d1e] z-20' : ''}
                       `}
                       style={getColumnStyle(colIdx, cell.column.getSize())}
+                      title={typeof cell.getValue() === 'string' || typeof cell.getValue() === 'number' ? String(cell.getValue()) : undefined}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
@@ -246,7 +247,7 @@ export function ReportTable<T>({
                     key={`total-${colIdx}`}
                     className={`
                       px-4 py-3 whitespace-nowrap font-bold text-slate-900 dark:text-white truncate
-                      ${colIdx < stickyColumns ? 'sticky bg-white dark:bg-[#030712] shadow-[6px_0_12px_-8px_rgba(15,23,42,0.18)] dark:shadow-[6px_0_12px_-8px_rgba(0,0,0,0.8)] dark:border-r dark:border-white/5 z-30' : ''}
+                      ${colIdx < stickyColumns ? 'md:sticky bg-white dark:bg-[#030712] shadow-[6px_0_12px_-8px_rgba(15,23,42,0.18)] dark:shadow-[6px_0_12px_-8px_rgba(0,0,0,0.8)] dark:border-r dark:border-white/5 z-30' : ''}
                     `}
                     style={getColumnStyle(colIdx, visibleColumns[colIdx]?.getSize() ?? 100)}
                   >

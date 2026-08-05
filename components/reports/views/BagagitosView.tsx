@@ -12,7 +12,7 @@ import type { ConfigReportRow } from '@/types/sales';
 const fmt = (n: number | null | undefined) => (n != null && n !== 0 ? n.toLocaleString('pt-BR') : '');
 
 export function BagagitosView({ rows: data, loading, error, truncated }: ReportViewProps<ConfigReportRow>) {
-  const { availableYears } = useFilterStore();
+  const { availableYears, selectedYears } = useFilterStore();
 
   const columns = useMemo<ColumnDef<ConfigReportRow>[]>(() => {
     const baseCols: ColumnDef<ConfigReportRow>[] = [
@@ -25,7 +25,7 @@ export function BagagitosView({ rows: data, loading, error, truncated }: ReportV
       { header: 'Outros Dados', accessorFn: (row) => row.extra_data?.outros_dados || '', size: 120 },
     ];
 
-    const yearCols: ColumnDef<ConfigReportRow>[] = availableYears.map((year) => ({
+    const yearCols: ColumnDef<ConfigReportRow>[] = selectedYears.map((year) => ({
       header: year.toString(),
       accessorFn: (row) => row.totals_by_year[year.toString()] || 0,
       cell: (info) => fmt(info.getValue() as number),
@@ -33,11 +33,11 @@ export function BagagitosView({ rows: data, loading, error, truncated }: ReportV
     }));
 
     return [...baseCols, ...yearCols];
-  }, [availableYears]);
+  }, [selectedYears]);
 
   return (
     <div className="space-y-4 pt-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold">BAGAGITOS</h2>
           <p className="text-sm text-muted-foreground">Linha de Bagagitos com Totais Anuais</p>
@@ -45,7 +45,7 @@ export function BagagitosView({ rows: data, loading, error, truncated }: ReportV
         <ExportButton
           reportType="bagagitos"
           data={data}
-          filename="Plastiron_Bagagitos.xlsx"
+          filename={`Plastiron_Bagagitos_${selectedYears.join('-')}.xlsx`}
         />
       </div>
 

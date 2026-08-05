@@ -4,6 +4,7 @@ import { create } from 'zustand';
 
 interface FilterState {
   selectedYear: number | null;
+  selectedYears: number[];
   selectedClient: string | null; // cod_cliente
   selectedClientName: string | null;
   selectedProduct: string | null; // cod_referencia
@@ -12,6 +13,7 @@ interface FilterState {
   availableYears: number[];
 
   setYear: (year: number | null) => void;
+  setYears: (years: number[]) => void;
   setClient: (cod: string | null, name: string | null) => void;
   setProduct: (cod: string | null) => void;
   setSemester: (semester: 1 | 2 | null) => void;
@@ -22,6 +24,7 @@ interface FilterState {
 
 export const useFilterStore = create<FilterState>((set) => ({
   selectedYear: null,
+  selectedYears: [],
   selectedClient: null,
   selectedClientName: null,
   selectedProduct: null,
@@ -29,7 +32,13 @@ export const useFilterStore = create<FilterState>((set) => ({
   selectedRevenueType: null,
   availableYears: [],
 
-  setYear: (year) => set({ selectedYear: year }),
+  setYear: (year) => set({ selectedYear: year, selectedYears: year ? [year] : [] }),
+  setYears: (years) => set(() => {
+    const normalized = Array.from(new Set(years.filter(Number.isInteger)))
+      .sort((a, b) => a - b)
+      .slice(-4);
+    return { selectedYears: normalized, selectedYear: normalized.at(-1) ?? null };
+  }),
   setClient: (cod, name) => set({ selectedClient: cod, selectedClientName: name }),
   setProduct: (cod) => set({ selectedProduct: cod }),
   setSemester: (semester) => set({ selectedSemester: semester }),
@@ -37,7 +46,6 @@ export const useFilterStore = create<FilterState>((set) => ({
   setAvailableYears: (years) => set({ availableYears: years }),
   clearFilters: () =>
     set({
-      selectedYear: null,
       selectedClient: null,
       selectedClientName: null,
       selectedProduct: null,

@@ -158,11 +158,11 @@ export function ReportChat() {
             <p className="px-2 py-3 text-sm text-slate-500">Nenhuma conversa salva.</p>
           ) : conversations.map((conversation) => (
             <div key={conversation.id} className={`group flex items-center gap-1 rounded-xl border ${activeConversationId === conversation.id ? 'border-indigo-500/40 bg-indigo-500/15' : 'border-transparent hover:bg-white/5'}`}>
-              <button type="button" onClick={() => void openConversation(conversation.id)} className="min-w-0 flex-1 px-3 py-3 text-left">
+              <button type="button" aria-pressed={activeConversationId === conversation.id} onClick={() => void openConversation(conversation.id)} className="min-w-0 flex-1 px-3 py-3 text-left">
                 <p className="truncate text-sm font-medium text-slate-200">{conversation.title}</p>
                 <p className="mt-1 text-[11px] text-slate-500">{new Date(conversation.updatedAt).toLocaleDateString('pt-BR')}</p>
               </button>
-              <button type="button" onClick={() => void deleteConversation(conversation.id)} aria-label="Excluir conversa" className="mr-2 rounded-lg p-2 text-slate-500 opacity-100 transition-colors hover:bg-rose-500/10 hover:text-rose-400 lg:opacity-0 lg:group-hover:opacity-100">
+              <button type="button" onClick={() => void deleteConversation(conversation.id)} aria-label="Excluir conversa" className="mr-2 rounded-lg p-2 text-slate-500 opacity-100 transition-colors hover:bg-rose-500/10 hover:text-rose-400 focus-visible:ring-2 focus-visible:ring-rose-400 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
@@ -183,7 +183,7 @@ export function ReportChat() {
         </header>
 
         <section className="flex flex-1 flex-col rounded-[2rem] p-5 glass-card">
-          <div className="flex-1 space-y-4 overflow-y-auto">
+          <div className="flex-1 space-y-4 overflow-y-auto" aria-live="polite">
             {messages.length === 0 ? (
               <div className="mx-auto max-w-2xl py-10 text-center">
                 <Bot className="mx-auto h-12 w-12 text-indigo-400" />
@@ -213,18 +213,19 @@ export function ReportChat() {
             )}
           </div>
 
-          {error && <p className="mt-4 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</p>}
+          {error && <p role="alert" className="mt-4 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</p>}
 
           <form onSubmit={(event) => { event.preventDefault(); void sendQuestion(question); }} className="mt-5 flex gap-3 border-t border-white/10 pt-5">
             <textarea
+              aria-label="Pergunta para o Chat IA"
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               maxLength={2000}
               rows={2}
               placeholder="Ex.: qual foi meu melhor cliente em 2026?"
-              className="min-h-14 flex-1 resize-none rounded-xl border border-white/10 bg-[#030712]/60 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-indigo-500"
+              className="min-h-14 flex-1 resize-none rounded-xl border border-white/10 bg-[#030712]/60 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-400"
             />
-            <Button type="submit" disabled={loading || !question.trim()} className="h-auto bg-indigo-600 px-5 text-white hover:bg-indigo-700">
+            <Button type="submit" aria-label="Enviar pergunta" disabled={loading || !question.trim()} className="h-auto bg-indigo-600 px-5 text-white hover:bg-indigo-700">
               <Send className="h-4 w-4" />
             </Button>
           </form>

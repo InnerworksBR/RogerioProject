@@ -13,6 +13,15 @@ export async function POST(request: NextRequest) {
     return response ?? NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  if (profile?.role !== 'leader') {
+    return NextResponse.json({ error: 'Somente o líder pode alterar configurações.' }, { status: 403 });
+  }
+
   const body = (await request.json().catch(() => ({}))) as {
     mode?: 'preview' | 'apply';
   };

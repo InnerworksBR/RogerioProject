@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { DashboardSummary } from '@/types/sales';
+import type { ReportYearSummary } from '@/types/reportApi';
 
 const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString('pt-BR');
 const fmtBRL = (n: number | null | undefined) =>
@@ -94,10 +95,12 @@ function KPICardSkeleton() {
 
 export function SummaryCards({
   data,
+  summaries = [],
   loading,
   error,
 }: {
   data: DashboardSummary | null;
+  summaries?: ReportYearSummary[];
   loading: boolean;
   error: string | null;
 }) {
@@ -135,6 +138,45 @@ export function SummaryCards({
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Faça upload de uma planilha para liberar os indicadores e os relatórios analíticos.
         </p>
+      </div>
+    );
+  }
+
+  if (summaries.length > 1) {
+    return (
+      <div className="glass-card overflow-hidden rounded-2xl">
+        <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+          <h2 className="font-bold text-slate-950 dark:text-white">Comparativo dos anos selecionados</h2>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Indicadores calculados separadamente para preservar a leitura de cada período.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-[760px] w-full text-sm">
+            <thead className="bg-slate-50 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
+              <tr>
+                <th className="px-5 py-3">Ano</th>
+                <th className="px-5 py-3">Faturado</th>
+                <th className="px-5 py-3">Pedidos</th>
+                <th className="px-5 py-3">Clientes</th>
+                <th className="px-5 py-3">Produtos</th>
+                <th className="px-5 py-3">Unidades</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summaries.map(({ year, summary }) => (
+                <tr key={year} className="border-t border-slate-100 dark:border-slate-800">
+                  <th scope="row" className="px-5 py-3 text-left font-black text-indigo-600 dark:text-indigo-400">{year}</th>
+                  <td className="px-5 py-3 font-semibold">{fmtBRL(summary?.total_faturado)}</td>
+                  <td className="px-5 py-3">{fmt(summary?.total_pedidos)}</td>
+                  <td className="px-5 py-3">{fmt(summary?.num_clientes)}</td>
+                  <td className="px-5 py-3">{fmt(summary?.num_produtos)}</td>
+                  <td className="px-5 py-3">{fmt(summary?.total_unidades)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }

@@ -90,6 +90,7 @@ export interface ConfigReportRow {
 
 // Row returned by geral RPC
 export interface GeralRow {
+  ano: number;
   id: number;
   sort_order: number;
   categoria: string;

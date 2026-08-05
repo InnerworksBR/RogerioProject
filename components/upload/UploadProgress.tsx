@@ -53,7 +53,7 @@ export function UploadProgress({
       : 'bg-indigo-500';
 
   return (
-    <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4 space-y-3 backdrop-blur-sm">
+    <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4 space-y-3 backdrop-blur-sm" aria-live="polite">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-slate-100 truncate">
@@ -76,7 +76,15 @@ export function UploadProgress({
       </div>
 
       {/* Barra de progresso — proporcional: parse 0-50, upload 50-95, finalização 95-100 */}
-      <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+      <div
+        className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden"
+        role="progressbar"
+        aria-label={`Progresso de ${filename ?? 'arquivo'}`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.min(100, Math.max(0, progress))}
+        aria-valuetext={`${progress}% — ${label}`}
+      >
         <div
           className={`h-1.5 rounded-full transition-all duration-300 ${barColor}`}
           style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}

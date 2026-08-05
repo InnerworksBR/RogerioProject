@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ReportTable, type ColumnGroupHeader } from '@/components/reports/ReportTable';
+import { ReportTable } from '@/components/reports/ReportTable';
 import { ExportButton } from '@/components/reports/ExportButton';
 import { useFilterStore } from '@/store/filterStore';
 import type { ReportViewProps } from '@/types/reportApi';
@@ -14,9 +14,10 @@ const fmtBRL = (n: number | null | undefined) =>
   n != null && n !== 0 ? n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
 
 export function TabelaDinamicaView({ rows: data, loading, error, truncated }: ReportViewProps<TabelaDinamicaRow>) {
-  const { selectedYear } = useFilterStore();
+  const { selectedYear, selectedYears } = useFilterStore();
 
   const columns = useMemo<ColumnDef<TabelaDinamicaRow>[]>(() => [
+    { header: 'Ano', accessorKey: 'ano', size: 70 },
     { header: 'Cód. Cliente', accessorKey: 'cod_cliente', size: 100 },
     { header: 'Cliente', accessorKey: 'nome_cliente', size: 250 },
     { header: 'Cód. Referência', accessorKey: 'cod_referencia', size: 120 },
@@ -40,11 +41,6 @@ export function TabelaDinamicaView({ rows: data, loading, error, truncated }: Re
   // Cabeçalho de grupo: Ano sobre as 12 colunas de meses + Total Ano + Valor Total
   // Colunas 0-3: Cód. Cliente, Cliente, Cód. Referência, Produto (sem grupo)
   // Colunas 4-17: JAN…DEZ + Total Ano + Valor Total (agrupadas sob o ano)
-  const groupHeaders = useMemo<ColumnGroupHeader[]>(() => {
-    if (!selectedYear) return [];
-    return [{ label: String(selectedYear), span: 14, startIndex: 4 }];
-  }, [selectedYear]);
-
   // Linha de totais: soma as colunas mensais, total_ano e total_valor
   const getTotalsRow = useMemo(() => (rows: TabelaDinamicaRow[]) => {
     const monthKeys: (keyof TabelaDinamicaRow)[] = ['jan','fev','mar','abr','mai','jun','jul','ago','set_','out_','nov','dez','total_ano'];
@@ -52,28 +48,29 @@ export function TabelaDinamicaView({ rows: data, loading, error, truncated }: Re
       rows.reduce((acc, row) => acc + (Number(row[key]) || 0), 0);
 
     return [
-      'TOTAL', // Cód. Cliente
+      truncated ? 'TOTAL PARCIAL' : 'TOTAL',
+      '',      // Ano
       '',      // Cliente
       '',      // Cód. Referência
       '',      // Produto
       ...monthKeys.map((k) => fmt(sum(k))),
       fmtBRL(sum('total_valor')),
     ];
-  }, []);
+  }, [truncated]);
 
   return (
     <div className="space-y-4 pt-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold">Tabela Dinâmica Geral</h2>
           <p className="text-sm text-muted-foreground">
-            Quantidade por Cliente × Produto × Mês {selectedYear ? `(${selectedYear})` : 'com seleção automática do último ano disponível'}
+            Quantidade por Cliente × Produto × Mês {selectedYears.length ? `(${selectedYears.join(', ')})` : 'com seleção automática do último ano disponível'}
           </p>
         </div>
         <ExportButton
           reportType="tabela_dinamica"
           data={data}
-          filename={`Plastiron_Tabela_Dinamica_${selectedYear}.xlsx`}
+          filename={`Plastiron_Tabela_Dinamica_${selectedYears.join('-')}.xlsx`}
         />
       </div>
 
@@ -94,8 +91,7 @@ export function TabelaDinamicaView({ rows: data, loading, error, truncated }: Re
             ? 'Nenhum dado disponível para os filtros selecionados.'
             : 'Nenhum ano disponível. Faça upload de um arquivo para gerar o relatório.'
         }
-        stickyColumns={4}
-        groupHeaders={groupHeaders}
+        stickyColumns={5}
         getTotalsRow={getTotalsRow}
       />
     </div>

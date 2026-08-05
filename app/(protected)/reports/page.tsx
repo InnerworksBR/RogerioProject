@@ -7,26 +7,19 @@ import { SummaryCards } from '@/components/reports/SummaryCards';
 import { ExecutiveSummaryCard } from '@/components/reports/ExecutiveSummaryCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { 
-  Download, 
-  Loader2, 
-  TrendingUp, 
-  ShoppingCart, 
-  Layers, 
+import {
+  Download,
+  Loader2,
+  TrendingUp,
+  ShoppingCart,
+  Layers,
   Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFilterStore } from '@/store/filterStore';
-import { 
-  getTabelaDinamica, 
-  getBaseDeCompra, 
-  getBaseDeItens, 
-  getBagagitos, 
-  getGeral 
-} from '@/lib/reportQueries';
 import { exportAllReports } from '@/lib/exportXlsx';
-import { reportQueryKeys, useReportQuery, useReportsBootstrap } from '@/lib/client/reportApi';
-import { DEFAULT_UI_ROW_LIMIT, type ParsedReportRequest, type ReportType } from '@/types/reportApi';
+import { fetchReportExport, reportQueryKeys, useReportQuery, useReportsBootstrap } from '@/lib/client/reportApi';
+import { DEFAULT_UI_ROW_LIMIT, MAX_EXPORT_ROW_LIMIT, type ParsedReportRequest, type ReportType } from '@/types/reportApi';
 import type { BaseDeCompraRow, ConfigReportRow, GeralRow, TabelaDinamicaRow } from '@/types/sales';
 
 import { TabelaDinamicaView } from '@/components/reports/views/TabelaDinamicaView';
@@ -40,17 +33,19 @@ export default function ReportsPage() {
   const [activeReport, setActiveReport] = useState<ReportType>('tabela_dinamica');
   const {
     selectedYear,
+    selectedYears,
     selectedClient,
     selectedProduct,
     selectedSemester,
     selectedRevenueType,
-    setYear,
+    setYears,
     setAvailableYears,
   } = useFilterStore();
 
   const bootstrapRequest = useMemo<ParsedReportRequest>(() => ({
     report: 'tabela_dinamica',
     year: null,
+    years: [],
     client: null,
     product: null,
     semester: null,
@@ -62,42 +57,48 @@ export default function ReportsPage() {
   useEffect(() => {
     if (!bootstrap.data) return;
     setAvailableYears(bootstrap.data.years);
-    if (selectedYear === null && bootstrap.data.selectedYear !== null) {
-      const seededRequest = { ...bootstrapRequest, year: bootstrap.data.selectedYear };
+    if (selectedYears.length === 0 && bootstrap.data.selectedYears.length > 0) {
+      const seededRequest = {
+        ...bootstrapRequest,
+        year: bootstrap.data.selectedYear,
+        years: bootstrap.data.selectedYears,
+      };
       queryClient.setQueryData(reportQueryKeys.query(seededRequest), {
         ...bootstrap.data.initialReport,
         requestId: bootstrap.data.requestId,
         summary: bootstrap.data.summary,
+        summaries: bootstrap.data.summaries,
       });
-      setYear(bootstrap.data.selectedYear);
+      setYears(bootstrap.data.selectedYears);
     }
-  }, [bootstrap.data, bootstrapRequest, queryClient, selectedYear, setAvailableYears, setYear]);
+  }, [bootstrap.data, bootstrapRequest, queryClient, selectedYears.length, setAvailableYears, setYears]);
 
   const reportRequest = useMemo<ParsedReportRequest>(() => ({
     report: activeReport,
     year: selectedYear,
+    years: selectedYears,
     client: selectedClient,
     product: selectedProduct,
     semester: selectedSemester,
     revenueType: selectedRevenueType,
     limit: DEFAULT_UI_ROW_LIMIT,
-  }), [activeReport, selectedYear, selectedClient, selectedProduct, selectedSemester, selectedRevenueType]);
-  const reportQuery = useReportQuery(reportRequest, bootstrap.isSuccess && selectedYear !== null);
+  }), [activeReport, selectedYear, selectedYears, selectedClient, selectedProduct, selectedSemester, selectedRevenueType]);
+  const reportQuery = useReportQuery(reportRequest, bootstrap.isSuccess && selectedYears.length > 0);
   const queryError = reportQuery.error instanceof Error
     ? reportQuery.error.message
     : bootstrap.error instanceof Error
       ? bootstrap.error.message
       : null;
   const rows = reportQuery.data?.rows ?? [];
-  const loading = bootstrap.isPending || (selectedYear !== null && (reportQuery.isPending || reportQuery.isFetching));
+  const loading = bootstrap.isPending || (selectedYears.length > 0 && (reportQuery.isPending || reportQuery.isFetching));
   const truncated = reportQuery.data?.truncated ?? false;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="flex justify-between items-center bg-slate-900 dark:bg-slate-900/50 p-8 rounded-[2rem] text-white shadow-2xl shadow-indigo-500/20 relative overflow-hidden">
+      <div className="relative flex flex-col gap-6 overflow-hidden rounded-[2rem] bg-slate-900 p-6 text-white shadow-2xl shadow-indigo-500/20 dark:bg-slate-900/50 sm:p-8 md:flex-row md:items-center md:justify-between">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 blur-[100px] rounded-full -mr-32 -mt-32" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full -ml-32 -mb-32" />
-        
+
         <div className="relative z-10">
           <h1 className="text-4xl font-black tracking-tight mb-2">Relatórios <span className="text-indigo-400">Analíticos</span></h1>
           <p className="text-slate-400 max-w-md font-medium">
@@ -118,7 +119,12 @@ export default function ReportsPage() {
       />
 
       {/* KPI cards */}
-      <SummaryCards data={selectedYear ? reportQuery.data?.summary ?? bootstrap.data?.summary ?? null : null} loading={loading} error={queryError} />
+      <SummaryCards
+        data={selectedYear ? reportQuery.data?.summary ?? bootstrap.data?.summary ?? null : null}
+        summaries={reportQuery.data?.summaries ?? bootstrap.data?.summaries ?? []}
+        loading={loading}
+        error={queryError}
+      />
       <ExecutiveSummaryCard />
 
       {/* Tabs Layout */}
@@ -170,12 +176,7 @@ export default function ReportsPage() {
 
 function DownloadAllButton() {
   const [downloading, setDownloading] = useState(false);
-  const { selectedYear, selectedClient, selectedClientName, selectedProduct, selectedSemester, selectedRevenueType, availableYears } = useFilterStore();
-  const yearsForConfigReports = availableYears.length > 0
-    ? availableYears
-    : selectedYear
-      ? [selectedYear]
-      : [];
+  const { selectedYear, selectedYears, selectedClient, selectedClientName, selectedProduct, selectedSemester, selectedRevenueType } = useFilterStore();
 
   const handleDownloadAll = async () => {
     if (!selectedYear) {
@@ -186,36 +187,45 @@ function DownloadAllButton() {
     setDownloading(true);
     try {
       toast.info('Preparando relatórios consolidados...');
-      
+
+      const baseRequest = {
+        year: selectedYear,
+        years: selectedYears,
+        client: selectedClient,
+        product: selectedProduct,
+        semester: selectedSemester,
+        revenueType: selectedRevenueType,
+        limit: MAX_EXPORT_ROW_LIMIT,
+      };
       const [td, bc, bi, bag, ger] = await Promise.all([
-        getTabelaDinamica(selectedYear, selectedClient ?? undefined, selectedProduct ?? undefined, selectedSemester ?? undefined, selectedRevenueType ?? undefined),
-        getBaseDeCompra(selectedYear, selectedClient ?? undefined, selectedProduct ?? undefined, selectedSemester ?? undefined, selectedRevenueType ?? undefined),
-        getBaseDeItens(yearsForConfigReports, selectedClient ?? undefined, selectedProduct ?? undefined, selectedSemester ?? undefined, selectedRevenueType ?? undefined),
-        getBagagitos(yearsForConfigReports, selectedClient ?? undefined, selectedProduct ?? undefined, selectedSemester ?? undefined, selectedRevenueType ?? undefined),
-        getGeral(selectedYear, selectedClient ?? undefined, selectedProduct ?? undefined, selectedSemester ?? undefined, selectedRevenueType ?? undefined),
+        fetchReportExport({ ...baseRequest, report: 'tabela_dinamica' }),
+        fetchReportExport({ ...baseRequest, report: 'base_compra' }),
+        fetchReportExport({ ...baseRequest, report: 'base_itens' }),
+        fetchReportExport({ ...baseRequest, report: 'bagagitos' }),
+        fetchReportExport({ ...baseRequest, report: 'geral' }),
       ]);
 
       await exportAllReports({
-        tabelaDinamica: td,
-        baseCompra: bc,
-        baseItens: bi,
-        bagagitos: bag,
-        geral: ger,
+        tabelaDinamica: td.rows as TabelaDinamicaRow[],
+        baseCompra: bc.rows as BaseDeCompraRow[],
+        baseItens: bi.rows as ConfigReportRow[],
+        bagagitos: bag.rows as ConfigReportRow[],
+        geral: ger.rows as GeralRow[],
       }, selectedClientName ?? undefined);
 
       toast.success('Excel consolidado gerado com sucesso!');
     } catch (err) {
       console.error(err);
-      toast.error('Erro ao gerar relatório consolidado');
+      toast.error(err instanceof Error ? err.message : 'Erro ao gerar relatório consolidado');
     } finally {
       setDownloading(false);
     }
   };
 
   return (
-    <Button 
-      onClick={handleDownloadAll} 
-      disabled={downloading || !selectedYear} 
+    <Button
+      onClick={handleDownloadAll}
+      disabled={downloading || !selectedYear}
       className="premium-gradient rounded-xl px-6 h-12 font-bold transition-all hover:scale-105 active:scale-95 text-white border-0"
     >
       {downloading ? (

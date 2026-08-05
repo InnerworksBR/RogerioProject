@@ -21,6 +21,7 @@ import type {
   ReportQueryResponse,
   ReportsBootstrapResponse,
   ReportType,
+  ReportYearSummary,
 } from '@/types/reportApi';
 import { toReportFilters } from '@/types/reportApi';
 
@@ -46,47 +47,67 @@ function limitRows<Row>(
   };
 }
 
+async function getSummaries(
+  supabase: DbClient,
+  requestId: string,
+  request: ParsedReportRequest
+): Promise<ReportYearSummary[]> {
+  return Promise.all(request.years.map(async (year) => ({
+    year,
+    summary: await measureQuery(
+      { requestId, operation: 'reports.summary' },
+      () => getDashboardSummaryForSupabase(
+        supabase,
+        year,
+        request.client ?? undefined,
+        request.product ?? undefined,
+        request.semester ?? undefined,
+        request.revenueType ?? undefined
+      ),
+      rowCount
+    ),
+  })));
+}
+
 export async function executeReportQuery(
   supabase: DbClient,
   requestId: string,
   request: ParsedReportRequest,
-  availableYears?: number[]
+  _availableYears?: number[]
 ): Promise<ReportQueryResult> {
-  if (!request.year) {
+  if (request.years.length === 0) {
     return limitRows(request.report, request, []);
   }
 
-  const year = request.year;
-  const reportYears = (request.report === 'base_itens' || request.report === 'bagagitos')
-    && !availableYears?.length
-    ? await measureQuery(
-        { requestId, operation: 'reports.years.query' },
-        () => getAvailableYearsForSupabase(supabase),
-        rowCount
-      )
-    : availableYears;
   const limit = request.limit + 1;
-  const args = [
-    supabase,
-    year,
-    request.client ?? undefined,
-    request.product ?? undefined,
-    request.semester ?? undefined,
-    request.revenueType ?? undefined,
-  ] as const;
-
   const rows = await measureQuery<unknown[]>(
     { requestId, operation: `report.${request.report}` },
     async () => {
       switch (request.report) {
         case 'tabela_dinamica':
-          return getTabelaDinamicaForSupabase(...args, limit);
+          return (await Promise.all(request.years.map((year) => getTabelaDinamicaForSupabase(
+            supabase,
+            year,
+            request.client ?? undefined,
+            request.product ?? undefined,
+            request.semester ?? undefined,
+            request.revenueType ?? undefined,
+            limit
+          )))).flat();
         case 'base_compra':
-          return getBaseDeCompraForSupabase(...args, limit);
+          return (await Promise.all(request.years.map((year) => getBaseDeCompraForSupabase(
+            supabase,
+            year,
+            request.client ?? undefined,
+            request.product ?? undefined,
+            request.semester ?? undefined,
+            request.revenueType ?? undefined,
+            limit
+          )))).flat();
         case 'base_itens':
           return getBaseDeItensForSupabase(
             supabase,
-            reportYears?.length ? reportYears : [year],
+            request.years,
             request.client ?? undefined,
             request.product ?? undefined,
             request.semester ?? undefined,
@@ -96,7 +117,7 @@ export async function executeReportQuery(
         case 'bagagitos':
           return getBagagitosForSupabase(
             supabase,
-            reportYears?.length ? reportYears : [year],
+            request.years,
             request.client ?? undefined,
             request.product ?? undefined,
             request.semester ?? undefined,
@@ -104,7 +125,18 @@ export async function executeReportQuery(
             limit
           );
         case 'geral':
-          return getGeralForSupabase(...args, limit);
+          return (await Promise.all(request.years.map(async (year) => {
+            const annualRows = await getGeralForSupabase(
+              supabase,
+              year,
+              request.client ?? undefined,
+              request.product ?? undefined,
+              request.semester ?? undefined,
+              request.revenueType ?? undefined,
+              limit
+            );
+            return annualRows.map((row) => ({ ...row, ano: year }));
+          }))).flat();
       }
     },
     rowCount
@@ -123,12 +155,14 @@ export async function getReportsBootstrap(
     () => getAvailableYearsForSupabase(supabase),
     rowCount
   );
-  const selectedYear = request.year && years.includes(request.year)
-    ? request.year
-    : years.at(-1) ?? null;
-  const effectiveRequest = { ...request, year: selectedYear };
+  const selectedYears = request.years.filter((year) => years.includes(year));
+  if (selectedYears.length === 0 && years.length > 0) {
+    selectedYears.push(years.at(-1) as number);
+  }
+  const selectedYear = selectedYears.at(-1) ?? null;
+  const effectiveRequest = { ...request, year: selectedYear, years: selectedYears };
 
-  const [clients, products, revenueTypes, summary, initialReport] = await Promise.all([
+  const [clients, products, revenueTypes, summaries, initialReport] = await Promise.all([
     measureQuery(
       { requestId, operation: 'reports.clients' },
       () => findClientsForSupabase(supabase, '', 40),
@@ -144,20 +178,14 @@ export async function getReportsBootstrap(
       () => getRevenueTypesForSupabase(supabase),
       rowCount
     ),
-    selectedYear
-      ? measureQuery(
-          { requestId, operation: 'reports.summary' },
-          () => getDashboardSummaryForSupabase(supabase, selectedYear),
-          rowCount
-        )
-      : Promise.resolve(null),
+    getSummaries(supabase, requestId, effectiveRequest),
     executeReportQuery(supabase, requestId, effectiveRequest, years),
   ]);
 
   const clientOptions: ReportOption[] = clients.map((client) => ({
     value: client.cod_cliente,
     label: client.nome_cliente,
-    sublabel: client.cod_cliente,
+    sublabel: client.cod_cliente.startsWith('group:') ? 'Cliente consolidado' : client.cod_cliente,
   }));
   const productOptions: ReportOption[] = products.map((product) => ({
     value: product.cod_referencia,
@@ -169,10 +197,12 @@ export async function getReportsBootstrap(
     requestId,
     years,
     selectedYear,
+    selectedYears,
     clients: clientOptions,
     products: productOptions,
     revenueTypes,
-    summary,
+    summary: summaries.at(-1)?.summary ?? null,
+    summaries,
     initialReport,
   };
 }
@@ -182,25 +212,17 @@ export async function executeReportScreenQuery(
   requestId: string,
   request: ParsedReportRequest
 ): Promise<ReportQueryResponse> {
-  const [result, summary] = await Promise.all([
+  const [result, summaries] = await Promise.all([
     executeReportQuery(supabase, requestId, request),
-    request.year
-      ? measureQuery(
-          { requestId, operation: 'reports.summary' },
-          () => getDashboardSummaryForSupabase(
-            supabase,
-            request.year ?? undefined,
-            request.client ?? undefined,
-            request.product ?? undefined,
-            request.semester ?? undefined,
-            request.revenueType ?? undefined
-          ),
-          rowCount
-        )
-      : Promise.resolve(null),
+    getSummaries(supabase, requestId, request),
   ]);
 
-  return { ...result, requestId, summary };
+  return {
+    ...result,
+    requestId,
+    summary: summaries.at(-1)?.summary ?? null,
+    summaries,
+  };
 }
 
 export async function getReportOptions(
@@ -219,7 +241,7 @@ export async function getReportOptions(
     return clients.map((client) => ({
       value: client.cod_cliente,
       label: client.nome_cliente,
-      sublabel: client.cod_cliente,
+      sublabel: client.cod_cliente.startsWith('group:') ? 'Cliente consolidado' : client.cod_cliente,
     }));
   }
 

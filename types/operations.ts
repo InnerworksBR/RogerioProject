@@ -14,6 +14,8 @@ export interface UploadMetadata {
   row_count: number | null;
   period_start: string | null;
   period_end: string | null;
+  skipped_rows: number;
+  skip_summary: Record<string, number>;
   error_msg: string | null;
   created_at: string;
 }

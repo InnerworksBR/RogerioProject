@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ExportButton } from '@/components/reports/ExportButton';
-import { ReportTable, type ColumnGroupHeader } from '@/components/reports/ReportTable';
+import { ReportTable } from '@/components/reports/ReportTable';
 import { useFilterStore } from '@/store/filterStore';
 import type { ReportViewProps } from '@/types/reportApi';
 import type { BaseDeCompraRow } from '@/types/sales';
@@ -12,9 +12,10 @@ import type { BaseDeCompraRow } from '@/types/sales';
 const fmt = (n: number | null | undefined) => (n != null && n !== 0 ? n.toLocaleString('pt-BR') : '');
 
 export function BaseCompraView({ rows: data, loading, error, truncated }: ReportViewProps<BaseDeCompraRow>) {
-  const { selectedYear } = useFilterStore();
+  const { selectedYear, selectedYears } = useFilterStore();
 
   const columns = useMemo<ColumnDef<BaseDeCompraRow>[]>(() => [
+    { header: 'Ano', accessorKey: 'ano', size: 70 },
     { header: 'Cód. Referência', accessorKey: 'cod_referencia', size: 120 },
     { header: 'Descrição Produto', accessorKey: 'descr_produto', size: 400 },
     { header: 'JAN', accessorKey: 'jan', cell: (info) => fmt(info.getValue() as number) },
@@ -35,11 +36,6 @@ export function BaseCompraView({ rows: data, loading, error, truncated }: Report
   // Cabeçalho de grupo: Ano sobre as 12 colunas de meses + Total Ano
   // Colunas 0-1: Cód. Referência, Descrição Produto (sem grupo)
   // Colunas 2-14: JAN…DEZ + Total Ano (agrupadas sob o ano)
-  const groupHeaders = useMemo<ColumnGroupHeader[]>(() => {
-    if (!selectedYear) return [];
-    return [{ label: String(selectedYear), span: 13, startIndex: 2 }];
-  }, [selectedYear]);
-
   // Linha de totais: soma as colunas mensais e total_ano
   const getTotalsRow = useMemo(() => (rows: BaseDeCompraRow[]) => {
     const monthKeys: (keyof BaseDeCompraRow)[] = ['jan','fev','mar','abr','mai','jun','jul','ago','set_','out_','nov','dez','total_ano'];
@@ -47,25 +43,26 @@ export function BaseCompraView({ rows: data, loading, error, truncated }: Report
       rows.reduce((acc, row) => acc + (Number(row[key]) || 0), 0);
 
     return [
-      'TOTAL', // Cód. Referência
+      truncated ? 'TOTAL PARCIAL' : 'TOTAL',
+      '',      // Ano
       '',      // Descrição Produto
       ...monthKeys.map((k) => fmt(sum(k))),
     ];
-  }, []);
+  }, [truncated]);
 
   return (
     <div className="space-y-4 pt-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold">BASE DE COMPRA</h2>
           <p className="text-sm text-muted-foreground">
-            Total por Produto × Mês {selectedYear ? `(${selectedYear})` : 'com seleção automática do último ano disponível'}
+            Total por Produto × Mês {selectedYears.length ? `(${selectedYears.join(', ')})` : 'com seleção automática do último ano disponível'}
           </p>
         </div>
         <ExportButton
           reportType="base_compra"
           data={data}
-          filename={`Plastiron_Base_Compra_${selectedYear}.xlsx`}
+          filename={`Plastiron_Base_Compra_${selectedYears.join('-')}.xlsx`}
         />
       </div>
 
@@ -86,8 +83,7 @@ export function BaseCompraView({ rows: data, loading, error, truncated }: Report
             ? 'Nenhum dado disponível para os filtros selecionados.'
             : 'Nenhum ano disponível. Faça upload de um arquivo para gerar o relatório.'
         }
-        stickyColumns={2}
-        groupHeaders={groupHeaders}
+        stickyColumns={3}
         getTotalsRow={getTotalsRow}
       />
     </div>

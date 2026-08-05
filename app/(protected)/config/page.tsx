@@ -428,6 +428,7 @@ export default function ConfigPage() {
                                 <td className="p-2">
                                   <div className="flex gap-1">
                                     <Button
+                                      aria-label={`Editar ${item.label || item.cod_referencia}`}
                                       size="icon"
                                       variant="ghost"
                                       className="h-8 w-8"
@@ -436,6 +437,7 @@ export default function ConfigPage() {
                                       <Edit2 className="size-3.5" />
                                     </Button>
                                     <Button
+                                      aria-label={`Excluir ${item.label || item.cod_referencia}`}
                                       size="icon"
                                       variant="ghost"
                                       className="h-8 w-8 text-destructive"
@@ -554,6 +556,7 @@ function EditRow({
     <tr className="animate-in fade-in bg-blue-50/50 duration-200 dark:bg-blue-900/10">
       <td className="p-2">
         <Input
+          aria-label="Código de referência"
           placeholder="Cód. Ref"
           value={form.cod_referencia || ''}
           onChange={(event) =>
@@ -564,6 +567,7 @@ function EditRow({
       </td>
       <td className="p-2">
         <Input
+          aria-label="Descrição do item"
           placeholder="Descrição"
           value={form.label || ''}
           onChange={(event) =>
@@ -575,6 +579,7 @@ function EditRow({
       {reportKey === 'geral' && (
         <td className="p-2">
           <Input
+            aria-label="Categoria"
             placeholder="Categoria"
             value={form.categoria || ''}
             onChange={(event) =>
@@ -589,6 +594,7 @@ function EditRow({
           {extraFields.map((field) => (
             <Input
               key={field}
+              aria-label={field.replace('_', ' ')}
               placeholder={field.replace('_', ' ')}
               value={form.extra_data?.[field] || ''}
               onChange={(event) =>
@@ -608,6 +614,7 @@ function EditRow({
       <td className="p-2">
         <div className="flex gap-1">
           <Button
+            aria-label="Salvar item"
             size="icon"
             variant="default"
             className="h-8 w-8 bg-green-600 hover:bg-green-700"
@@ -615,7 +622,7 @@ function EditRow({
           >
             <Save className="size-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onCancel}>
+          <Button aria-label="Cancelar edição" size="icon" variant="ghost" className="h-8 w-8" onClick={onCancel}>
             <X className="size-3.5" />
           </Button>
         </div>

@@ -62,9 +62,10 @@ test('report routes authenticate, validate and normalize failures', () => {
 
 test('query keys cover every filter and fetchers forward AbortSignal', () => {
   const source = fs.readFileSync(path.join(root, 'lib/client/reportApi.ts'), 'utf8');
-  for (const field of ['report', 'year', 'client', 'product', 'semester', 'revenueType', 'limit']) {
+  for (const field of ['report', 'client', 'product', 'semester', 'revenueType', 'limit']) {
     assert.match(source, new RegExp(`request\\.${field}\\b`));
   }
+  assert.match(source, /request\.years\.join\(','\)/);
   assert.match(source, /fetchJson\([^)]*, signal\)/);
   assert.match(source, /queryFn: \(\{ signal \}\)/);
   assert.match(source, /placeholderData: keepPreviousData/);

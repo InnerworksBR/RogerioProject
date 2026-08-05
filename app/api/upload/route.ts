@@ -107,7 +107,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('uploads')
-    .select('id, filename, fingerprint, status, row_count, period_start, period_end, error_msg, created_at')
+    .select('id, filename, fingerprint, status, row_count, period_start, period_end, skipped_rows, skip_summary, error_msg, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(20);
@@ -136,6 +136,7 @@ export async function PUT(req: NextRequest) {
     fileSize?: number;
     totalRows?: number;
     confirmOverlap?: boolean;
+    confirmReplacement?: boolean;
   };
 
   if (
@@ -173,8 +174,18 @@ export async function PUT(req: NextRequest) {
   const partialOverlaps = (overlaps ?? []).filter(
     (item) => !(item.period_start === body.periodStart && item.period_end === body.periodEnd),
   );
+  const exactOverlaps = (overlaps ?? []).filter(
+    (item) => item.period_start === body.periodStart && item.period_end === body.periodEnd,
+  );
+  if (exactOverlaps.length > 0 && !body.confirmReplacement) {
+    return NextResponse.json({
+      error: 'Este período já foi importado e será substituído.',
+      kind: 'replacement',
+      overlaps: exactOverlaps,
+    }, { status: 409 });
+  }
   if (partialOverlaps.length > 0 && !body.confirmOverlap) {
-    return NextResponse.json({ error: 'Periodo sobreposto.', overlaps: partialOverlaps }, { status: 409 });
+    return NextResponse.json({ error: 'Periodo sobreposto.', kind: 'overlap', overlaps: partialOverlaps }, { status: 409 });
   }
 
   const { count: processingCount, error: processingError } = await supabase
@@ -271,12 +282,24 @@ export async function DELETE(req: NextRequest) {
   const rateLimit = rateLimitResponse(user.id);
   if (rateLimit) return rateLimit;
 
-  const { upload_id, errorMessage } = (await req.json().catch(() => ({}))) as {
+  const { upload_id, errorMessage, mode } = (await req.json().catch(() => ({}))) as {
     upload_id?: string;
     errorMessage?: string;
+    mode?: 'cleanup' | 'remove';
   };
   if (!isUuid(upload_id) || (errorMessage !== undefined && !hasValidLength(errorMessage, 1000))) {
     return NextResponse.json({ error: 'Upload obrigatorio.' }, { status: 400 });
+  }
+
+  if (mode === 'remove') {
+    const { error } = await supabase
+      .from('uploads')
+      .delete()
+      .eq('id', upload_id)
+      .eq('user_id', user.id);
+    return error
+      ? NextResponse.json({ error: error.message }, { status: 500 })
+      : NextResponse.json({ ok: true, removed: true });
   }
 
   const { error: salesError } = await supabase.from('sales_rows').delete().eq('upload_id', upload_id).eq('user_id', user.id);

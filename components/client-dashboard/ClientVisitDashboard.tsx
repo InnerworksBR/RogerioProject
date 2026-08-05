@@ -20,13 +20,13 @@ import {
 import { toast } from 'sonner';
 import { buildClientVisitDashboardFromAggregates } from '@/lib/clientDashboard';
 import {
-  getClientSalesHistory,
-  searchClients,
   getClientDashboardSummary,
   getClientMonthlyTrend,
-  getClientYearlyHistory,
-  getClientTopProducts,
   getClientRecentOrders,
+  getClientSalesHistory,
+  getClientTopProducts,
+  getClientYearlyHistory,
+  searchClients,
 } from '@/lib/reportQueries';
 import { normalizeSearchText } from '@/lib/text';
 import { cn } from '@/lib/utils';
@@ -544,6 +544,7 @@ export function ProductExplorer({
 
         <div className="w-full lg:w-80">
           <Input
+            aria-label="Filtrar produtos por código ou descrição"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Filtrar por código ou descrição..."
@@ -561,6 +562,7 @@ export function ProductExplorer({
             <button
               key={product.cod_referencia}
               type="button"
+              aria-pressed={selectedProduct?.cod_referencia === product.cod_referencia}
               onClick={() => setSelectedProductCode(product.cod_referencia)}
               className={cn(
                 'w-full rounded-2xl border p-4 text-left transition-all',
@@ -931,17 +933,13 @@ export function ClientVisitDashboard() {
   const [clientsError, setClientsError] = useState<string | null>(null);
   const [clientsLoading, setClientsLoading] = useState(false);
 
-  // ── Dashboard (principal): carregado via RPCs agregadas ──
+  // ── Dashboard principal: histórico canônico completo, calculado uma vez por seleção ──
   const [dashboardData, setDashboardData] = useState<ClientVisitDashboardData | null>(null);
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
 
-  // ── Pedidos recentes: carregados sob demanda na aba Resumo ──
-  // (já incluídos nas RPCs agregadas acima; mantido para retrocompatibilidade)
-
-  // ── Linhas brutas: carregadas somente quando a aba Produtos é aberta ──
   const [rows, setRows] = useState<ClientSalesRow[]>([]);
-  const [loadingRows, setLoadingRows] = useState(false);
+  const [loadedRowsClient, setLoadedRowsClient] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('resumo');
 
   // Busca de clientes com debounce (300 ms) via RPC search_clients
@@ -972,7 +970,7 @@ export function ClientVisitDashboard() {
     };
   }, [clientQuery]);
 
-  // Ao selecionar cliente + ano: carregar RPCs agregadas em paralelo
+  // Ao selecionar cliente + ano, uma única leitura alimenta resumo, histórico e produtos.
   useEffect(() => {
     let active = true;
 
@@ -981,6 +979,7 @@ export function ClientVisitDashboard() {
       setDashboardError(null);
       setLoadingDashboard(false);
       setRows([]);
+      setLoadedRowsClient(null);
       return () => { active = false; };
     }
 
@@ -994,29 +993,20 @@ export function ClientVisitDashboard() {
       getClientMonthlyTrend(selectedClient, selectedYear),
       getClientYearlyHistory(selectedClient),
       getClientTopProducts(selectedClient, selectedYear),
-      getClientRecentOrders(selectedClient, 8),
+      getClientRecentOrders(selectedClient),
     ])
-      .then(([summaryRows, trendRows, yearlyRows, productRows, recentOrderRows]) => {
+      .then(([summary, trend, history, products, recentOrders]) => {
         if (!active) return;
-        if (
-          summaryRows.length === 0 &&
-          trendRows.length === 0 &&
-          yearlyRows.length === 0 &&
-          productRows.length === 0
-        ) {
-          setDashboardData(null);
-        } else {
-          setDashboardData(
-            buildClientVisitDashboardFromAggregates(
-              summaryRows,
-              trendRows,
-              yearlyRows,
-              productRows,
-              recentOrderRows,
+        setDashboardData(summary.length > 0
+          ? buildClientVisitDashboardFromAggregates(
+              summary,
+              trend,
+              history,
+              products,
+              recentOrders,
               selectedYear
             )
-          );
-        }
+          : null);
       })
       .catch((error) => {
         if (!active) return;
@@ -1033,20 +1023,26 @@ export function ClientVisitDashboard() {
     return () => { active = false; };
   }, [selectedClient, selectedYear]);
 
-  // Carregar linhas brutas somente quando a aba Produtos é aberta
+  // A cronologia detalhada precisa das linhas; carregá-las só ao abrir Produtos.
   useEffect(() => {
-    if (activeTab !== 'produtos' || !selectedClient || rows.length > 0 || loadingRows) return;
+    if (activeTab !== 'produtos' || !selectedClient || loadedRowsClient === selectedClient) return;
 
     let active = true;
-    setLoadingRows(true);
-
     getClientSalesHistory(selectedClient)
-      .then((data) => { if (active) setRows(data); })
-      .catch(() => { /* ignora — ProductExplorer renderiza vazio */ })
-      .finally(() => { if (active) setLoadingRows(false); });
+      .then((data) => {
+        if (!active) return;
+        setRows(data);
+      })
+      .catch((error) => {
+        if (!active) return;
+        toast.error(error instanceof Error ? error.message : 'Erro ao carregar a cronologia de produtos.');
+      })
+      .finally(() => {
+        if (active) setLoadedRowsClient(selectedClient);
+      });
 
     return () => { active = false; };
-  }, [activeTab, selectedClient, rows.length, loadingRows]);
+  }, [activeTab, loadedRowsClient, selectedClient]);
 
   const selectedClientRecord = useMemo(
     () => clients.find((client) => client.cod_cliente === selectedClient),
@@ -1199,11 +1195,11 @@ export function ClientVisitDashboard() {
           {dashboardMode === 'cliente' ? (
             <>
               <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 rounded-[3rem] overflow-hidden mt-8 shadow-2xl border border-white/5 ring-1 ring-white/10">
-                <SharedDashboardClientView 
-                  dashboardData={dashboardData} 
-                  clientName={selectedClientRecord?.nome_cliente || ''} 
-                  year={selectedYear!} 
-                  rows={rows} 
+                <SharedDashboardClientView
+                  dashboardData={dashboardData}
+                  clientName={selectedClientName || selectedClientRecord?.nome_cliente || ''}
+                  year={selectedYear!}
+                  rows={rows}
                 />
               </div>
             </>

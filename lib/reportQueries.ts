@@ -249,6 +249,13 @@ export async function getClientSalesHistory(codCliente: string): Promise<ClientS
   const rows: ClientSalesRow[] = [];
   let from = 0;
   const pageSize = 1000;
+  const { data: resolvedCodes, error: resolveError } = await db().rpc('resolve_client_codes', {
+    p_client_key: codCliente,
+  });
+  if (resolveError) throw normalizeDbError(resolveError);
+  const clientCodes = ((resolvedCodes ?? []) as Array<{ cod_cliente: string }>)
+    .map((item) => item.cod_cliente);
+  if (clientCodes.length === 0) return [];
 
   while (true) {
     const { data, error } = await db()
@@ -271,7 +278,7 @@ export async function getClientSalesHistory(codCliente: string): Promise<ClientS
         ano,
         mes
       `)
-      .eq('cod_cliente', codCliente)
+      .in('cod_cliente', clientCodes)
       .order('data_pedido', { ascending: true, nullsFirst: false })
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
@@ -417,7 +424,6 @@ export async function getConfigItems(reportKey: string) {
     .from('report_config_items')
     .select('*')
     .eq('report_key', reportKey)
-    .eq('user_id', user.id)
     .order('sort_order', { ascending: true })
     .order('id', { ascending: true });
   if (error) throw normalizeDbError(error);

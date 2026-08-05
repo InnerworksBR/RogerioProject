@@ -8,6 +8,8 @@ import { Combobox, type ComboboxItem } from '@/components/ui/combobox';
 import { useReportOptions } from '@/lib/client/reportApi';
 import { useFilterStore } from '@/store/filterStore';
 import type { ReportOption } from '@/types/reportApi';
+import { MAX_COMPARISON_YEARS } from '@/types/reportApi';
+import { toast } from 'sonner';
 
 function useDebouncedValue<T>(value: T, delayMs: number) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -30,13 +32,13 @@ export function ReportFilterBar({
   error?: string | null;
 }) {
   const {
-    selectedYear,
+    selectedYears,
     selectedClient,
     selectedClientName,
     selectedProduct,
     selectedSemester,
     selectedRevenueType,
-    setYear,
+    setYears,
     setClient,
     setProduct,
     setSemester,
@@ -80,32 +82,40 @@ export function ReportFilterBar({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="filter-year" className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
-            <CalendarIcon size={12} /> Ano de Referência
-          </label>
-          <Select
-            value={selectedYear?.toString() ?? 'all'}
-            onValueChange={(value) => {
-              if (!value || value === 'all') {
-                setYear(null);
-                return;
-              }
-
-              setYear(parseInt(value, 10));
-            }}
-          >
-            <SelectTrigger id="filter-year" aria-label="Ano de Referência" className="w-36 bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50 rounded-xl h-11 focus:ring-indigo-500/20">
-              <SelectValue placeholder="Selecione o ano" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-slate-200 dark:border-slate-800 shadow-2xl">
-              <SelectItem value="all" className="font-medium">Todos os anos</SelectItem>
-              {availableYears.map((year) => (
-                <SelectItem key={year} value={year.toString()} className="font-medium">
+          <span id="filter-years-label" className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+            <CalendarIcon size={12} /> Anos para comparar
+          </span>
+          <div className="flex min-h-11 flex-wrap items-center gap-1.5" role="group" aria-labelledby="filter-years-label">
+            {availableYears.map((year) => {
+              const active = selectedYears.includes(year);
+              return (
+                <Button
+                  key={year}
+                  type="button"
+                  size="sm"
+                  variant={active ? 'default' : 'outline'}
+                  aria-pressed={active}
+                  onClick={() => {
+                    if (active && selectedYears.length === 1) {
+                      toast.info('Mantenha ao menos um ano selecionado.');
+                      return;
+                    }
+                    if (!active && selectedYears.length >= MAX_COMPARISON_YEARS) {
+                      toast.info(`Compare no máximo ${MAX_COMPARISON_YEARS} anos por vez.`);
+                      return;
+                    }
+                    setYears(active
+                      ? selectedYears.filter((item) => item !== year)
+                      : [...selectedYears, year]);
+                  }}
+                  className="h-9 rounded-xl px-3"
+                >
                   {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                </Button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-slate-400">Selecione de 1 a {MAX_COMPARISON_YEARS} anos.</p>
         </div>
 
         <div className="space-y-2 flex-1 min-w-[280px]">
@@ -145,7 +155,7 @@ export function ReportFilterBar({
           />
         </div>
 
-        {(selectedYear || selectedClient || selectedProduct || selectedSemester || selectedRevenueType) && (
+        {(selectedClient || selectedProduct || selectedSemester || selectedRevenueType) && (
           <Button
             variant="ghost"
             size="sm"

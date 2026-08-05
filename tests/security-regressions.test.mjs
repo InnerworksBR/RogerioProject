@@ -4,12 +4,15 @@ import test from 'node:test';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-test('public sharing uses opaque hashed tokens scoped to the owner', async () => {
+test('public sharing uses opaque hashed tokens scoped to the commercial account', async () => {
   const shareLinks = await read('lib/server/shareLinks.ts');
   const packageJson = await read('package.json');
   assert.match(shareLinks, /randomBytes\(32\)/);
   assert.match(shareLinks, /createHash\('sha256'\)/);
-  assert.match(shareLinks, /\.eq\('user_id', shareLink\.user_id\)/);
+  assert.match(shareLinks, /ownerIds/);
+  assert.match(shareLinks, /\.in\('user_id', ownerIds\)/);
+  assert.match(shareLinks, /client_group_members/);
+  assert.match(shareLinks, /\.in\('cod_cliente', clientCodes\)/);
   assert.doesNotMatch(packageJson, /jsonwebtoken/);
 });
 

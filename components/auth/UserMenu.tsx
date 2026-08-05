@@ -52,6 +52,7 @@ export function UserMenu({ email }: { email: string }) {
       </Link>
 
       <Button
+        aria-label={loading ? 'Encerrando sessão' : 'Sair da conta'}
         variant="ghost"
         size="sm"
         disabled={loading}

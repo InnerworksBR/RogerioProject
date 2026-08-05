@@ -347,6 +347,7 @@ export default function TeamManagementPage() {
                 <button
                   key={plan.id}
                   type="button"
+                  aria-pressed={isSelected}
                   onClick={() => setSelectedPlan(plan.id)}
                   className={`rounded-2xl border p-5 text-left transition-all ${isSelected ? 'border-indigo-400 bg-indigo-500/15 ring-2 ring-indigo-500/20' : 'border-white/10 bg-[#030712]/40 hover:border-indigo-500/40'}`}
                 >

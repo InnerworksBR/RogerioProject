@@ -42,6 +42,7 @@ export function DropZone() {
   const filterStore = useFilterStore();
   const [queuedFiles, setQueuedFiles] = useState<string[]>([]);
   const [completedFiles, setCompletedFiles] = useState(0);
+  const [fileResults, setFileResults] = useState<Array<{ filename: string; status: 'success' | 'error'; rows: number; skipped: number; message?: string }>>([]);
   const [queueDone, setQueueDone] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
@@ -50,7 +51,8 @@ export function DropZone() {
     file: File,
     fingerprint: string,
     metadata: ParseMetadata,
-    confirmOverlap = false
+    confirmOverlap = false,
+    confirmReplacement = false
   ): Promise<string> => {
     const response = await fetch('/api/upload', {
       method: 'PUT',
@@ -65,23 +67,27 @@ export function DropZone() {
         fileSize: file.size,
         totalRows: metadata.totalRows,
         confirmOverlap,
+        confirmReplacement,
       }),
     });
     const payload = await response.json().catch(() => ({}));
 
-    if (response.status === 409 && payload.overlaps && !confirmOverlap) {
+    if (response.status === 409 && payload.overlaps) {
       const files = (payload.overlaps as { filename: string }[])
         .map((item) => item.filename)
         .join(', ');
+      const isReplacement = payload.kind === 'replacement';
       const accepted = await confirm({
-        title: 'Sobreposição de período detectada',
-        description: `O período de "${file.name}" sobrepõe uploads existentes (${files}). Deseja importar mesmo assim?`,
-        confirmLabel: 'Importar mesmo assim',
+        title: isReplacement ? 'Substituir importação deste período?' : 'Sobreposição de período detectada',
+        description: isReplacement
+          ? `“${file.name}” possui o mesmo período de ${files}. Ao concluir, a importação anterior e suas linhas serão substituídas pela nova.`
+          : `O período de “${file.name}” sobrepõe uploads existentes (${files}). Deseja importar mesmo assim?`,
+        confirmLabel: isReplacement ? 'Substituir e importar' : 'Importar mesmo assim',
         cancelLabel: 'Cancelar',
         variant: 'destructive',
       });
-      if (!accepted) throw new Error('Importacao cancelada por sobreposicao de periodo.');
-      return createUpload(file, fingerprint, metadata, true);
+      if (!accepted) throw new Error('Importação cancelada pelo usuário.');
+      return createUpload(file, fingerprint, metadata, confirmOverlap || !isReplacement, confirmReplacement || isReplacement);
     }
 
     if (!response.ok) throw new Error(payload.error ?? 'Falha ao criar registro de upload.');
@@ -151,6 +157,12 @@ export function DropZone() {
         totalRows
       );
       setCompletedFiles((count) => count + 1);
+      setFileResults((current) => [...current, {
+        filename: file.name,
+        status: 'success',
+        rows: totalRows,
+        skipped: fileMeta?.skippedRows ?? 0,
+      }]);
       await queryClient.invalidateQueries({ queryKey: reportQueryKeys.all });
       toast.success(`${file.name}: ${totalRows.toLocaleString('pt-BR')} linhas importadas.`);
     } catch (error) {
@@ -163,6 +175,13 @@ export function DropZone() {
         }).catch(() => undefined);
       }
       store.setError(message);
+      setFileResults((current) => [...current, {
+        filename: file.name,
+        status: 'error',
+        rows: 0,
+        skipped: 0,
+        message,
+      }]);
       toast.error(`${file.name}: ${message}`);
     }
   }, [createUpload, queryClient, store]);
@@ -171,6 +190,7 @@ export function DropZone() {
     if (acceptedFiles.length === 0) return;
     setQueuedFiles(acceptedFiles.map((file) => file.name));
     setCompletedFiles(0);
+    setFileResults([]);
     setQueueDone(false);
     store.resetSummary();
 
@@ -196,7 +216,7 @@ export function DropZone() {
     store.status === 'finalizing';
 
   // Mostra o card-resumo quando a fila terminou E pelo menos um arquivo foi concluído.
-  const queueComplete = queueDone && completedFiles > 0;
+  const queueComplete = queueDone;
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -268,9 +288,7 @@ export function DropZone() {
               </div>
               <div>
                 <p className="text-base font-bold text-slate-100">
-                  {summary.files === 1
-                    ? '1 arquivo carregado'
-                    : `${summary.files} arquivos carregados`}
+                  Fila concluída: {summary.files} de {queuedFiles.length} arquivo{queuedFiles.length !== 1 ? 's' : ''} importado{summary.files !== 1 ? 's' : ''}
                 </p>
                 <p className="text-sm text-slate-400">
                   <span className="inline-flex items-center gap-1.5">
@@ -286,13 +304,23 @@ export function DropZone() {
               </div>
             </div>
 
-            <Button
+            <ul className="space-y-2" aria-label="Resultado dos arquivos">
+              {fileResults.map((result) => (
+                <li key={`${result.filename}-${result.status}`} className={`rounded-xl border px-3 py-2 text-sm ${result.status === 'success' ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-200' : 'border-rose-500/20 bg-rose-500/5 text-rose-200'}`}>
+                  <span className="font-semibold">{result.filename}</span> — {result.status === 'success'
+                    ? `${result.rows.toLocaleString('pt-BR')} linhas importadas${result.skipped > 0 ? `; ${result.skipped.toLocaleString('pt-BR')} ignoradas` : ''}`
+                    : result.message}
+                </li>
+              ))}
+            </ul>
+
+            {summary.files > 0 && <Button
               onClick={handleViewReports}
               disabled={isNavigating}
               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold h-10"
             >
               {isNavigating ? 'Carregando...' : 'Ver relatórios'}
-            </Button>
+            </Button>}
           </div>
         )}
 

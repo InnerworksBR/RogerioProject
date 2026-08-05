@@ -525,6 +525,13 @@ export async function getClientSalesHistoryForSupabase(
   const rows: ClientSalesRow[] = [];
   let from = 0;
   const pageSize = 1000;
+  const { data: resolvedCodes, error: resolveError } = await supabase.rpc('resolve_client_codes', {
+    p_client_key: codCliente,
+  });
+  if (resolveError) throw normalizeDbError(resolveError);
+  const clientCodes = ((resolvedCodes ?? []) as Array<{ cod_cliente: string }>)
+    .map((item) => item.cod_cliente);
+  if (clientCodes.length === 0) return [];
 
   while (true) {
     const { data, error } = await supabase
@@ -549,7 +556,7 @@ export async function getClientSalesHistoryForSupabase(
         mes
       `
       )
-      .eq('cod_cliente', codCliente)
+      .in('cod_cliente', clientCodes)
       .order('data_pedido', { ascending: true, nullsFirst: false })
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1);

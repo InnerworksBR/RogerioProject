@@ -35,11 +35,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Cliente e ano sao obrigatorios.' }, { status: 400 });
   }
 
+  const { data: resolvedCodes, error: resolveError } = await supabase.rpc('resolve_client_codes', {
+    p_client_key: clientId,
+  });
+  if (resolveError) return NextResponse.json({ error: resolveError.message }, { status: 500 });
+  const clientCodes = ((resolvedCodes ?? []) as Array<{ cod_cliente: string }>).map((item) => item.cod_cliente);
+  if (clientCodes.length === 0) return NextResponse.json({ error: 'Cliente fora do seu escopo.' }, { status: 403 });
+
   const { count, error: clientError } = await supabase
     .from('sales_rows')
     .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('cod_cliente', clientId)
+    .in('cod_cliente', clientCodes)
     .eq('ano', year!);
 
   if (clientError) return NextResponse.json({ error: clientError.message }, { status: 500 });

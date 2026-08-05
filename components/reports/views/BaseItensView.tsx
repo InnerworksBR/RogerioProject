@@ -12,7 +12,7 @@ import type { ConfigReportRow } from '@/types/sales';
 const fmt = (n: number | null | undefined) => (n != null && n !== 0 ? n.toLocaleString('pt-BR') : '');
 
 export function BaseItensView({ rows: data, loading, error, truncated }: ReportViewProps<ConfigReportRow>) {
-  const { availableYears } = useFilterStore();
+  const { availableYears, selectedYears } = useFilterStore();
 
   const columns = useMemo<ColumnDef<ConfigReportRow>[]>(() => {
     const baseCols: ColumnDef<ConfigReportRow>[] = [
@@ -25,7 +25,7 @@ export function BaseItensView({ rows: data, loading, error, truncated }: ReportV
       { header: 'Descrição', accessorKey: 'label', size: 350 },
     ];
 
-    const yearCols: ColumnDef<ConfigReportRow>[] = availableYears.map((year) => ({
+    const yearCols: ColumnDef<ConfigReportRow>[] = selectedYears.map((year) => ({
       header: year.toString(),
       accessorFn: (row) => row.totals_by_year[year.toString()] || 0,
       cell: (info) => fmt(info.getValue() as number),
@@ -37,15 +37,15 @@ export function BaseItensView({ rows: data, loading, error, truncated }: ReportV
       ...yearCols,
       { header: 'Lançamento', accessorFn: (row) => row.extra_data?.lancamento || '', size: 150 },
     ];
-  }, [availableYears]);
+  }, [selectedYears]);
 
   // Linha de totais: soma as colunas de anos (índices 7..7+availableYears.length-1)
   const getTotalsRow = useMemo(() => (rows: ConfigReportRow[]) => {
-    const yearTotals = availableYears.map((year) =>
+    const yearTotals = selectedYears.map((year) =>
       fmt(rows.reduce((acc, row) => acc + (Number(row.totals_by_year[year.toString()]) || 0), 0))
     );
     return [
-      'TOTAL', // #
+      truncated ? 'TOTAL PARCIAL' : 'TOTAL',
       '',      // DTS
       '',      // R2A
       '',      // Lumax
@@ -55,11 +55,11 @@ export function BaseItensView({ rows: data, loading, error, truncated }: ReportV
       ...yearTotals,
       '',      // Lançamento
     ];
-  }, [availableYears]);
+  }, [selectedYears, truncated]);
 
   return (
     <div className="space-y-4 pt-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold">BASE DE ITENS</h2>
           <p className="text-sm text-muted-foreground">Itens Principais com Totais Anuais</p>
@@ -67,7 +67,7 @@ export function BaseItensView({ rows: data, loading, error, truncated }: ReportV
         <ExportButton
           reportType="base_itens"
           data={data}
-          filename="Plastiron_Base_Itens.xlsx"
+          filename={`Plastiron_Base_Itens_${selectedYears.join('-')}.xlsx`}
         />
       </div>
 

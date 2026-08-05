@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ExportButton } from '@/components/reports/ExportButton';
-import { ReportTable, type ColumnGroupHeader } from '@/components/reports/ReportTable';
+import { ReportTable } from '@/components/reports/ReportTable';
 import { useFilterStore } from '@/store/filterStore';
 import type { ReportViewProps } from '@/types/reportApi';
 import type { GeralRow } from '@/types/sales';
@@ -12,14 +12,15 @@ import type { GeralRow } from '@/types/sales';
 const fmt = (n: number | null | undefined) => (n != null && n !== 0 ? n.toLocaleString('pt-BR') : '');
 
 export function GeralView({ rows, loading, error, truncated }: ReportViewProps<GeralRow>) {
-  const { selectedYear } = useFilterStore();
+  const { selectedYear, selectedYears } = useFilterStore();
   const data = useMemo<any[]>(() => {
     const processed: any[] = [];
     let lastCategory = '';
     rows.forEach((row) => {
-      if (row.categoria !== lastCategory) {
-        processed.push({ isHeader: true, label: row.categoria });
-        lastCategory = row.categoria;
+      const categoryKey = `${row.ano}:${row.categoria}`;
+      if (categoryKey !== lastCategory) {
+        processed.push({ isHeader: true, label: `${row.ano} · ${row.categoria}` });
+        lastCategory = categoryKey;
       }
       processed.push(row);
     });
@@ -27,6 +28,7 @@ export function GeralView({ rows, loading, error, truncated }: ReportViewProps<G
   }, [rows]);
 
   const columns = useMemo<ColumnDef<any>[]>(() => [
+    { header: 'Período', accessorFn: (row) => row.isHeader ? '' : row.ano, size: 70 },
     {
       header: 'Status',
       accessorFn: (row) => row.isHeader ? '' : row.extra_data?.status || '',
@@ -69,11 +71,6 @@ export function GeralView({ rows, loading, error, truncated }: ReportViewProps<G
   // Cabeçalho de grupo: Ano sobre as 12 colunas de meses + Total Ano
   // Colunas 0-7: Status, EMB, Plastiron, Descrição, Ano, Aplicação, Cor, Outros Dados (sem grupo)
   // Colunas 8-20: JAN…DEZ + Total Ano (agrupadas sob o ano)
-  const groupHeaders = useMemo<ColumnGroupHeader[]>(() => {
-    if (!selectedYear) return [];
-    return [{ label: String(selectedYear), span: 13, startIndex: 8 }];
-  }, [selectedYear]);
-
   // Linha de totais: soma apenas linhas de dados (não as de cabeçalho de categoria)
   const getTotalsRow = useMemo(() => (rows: any[]) => {
     const dataRows = rows.filter((row) => !row.isHeader);
@@ -82,31 +79,32 @@ export function GeralView({ rows, loading, error, truncated }: ReportViewProps<G
       dataRows.reduce((acc: number, row: any) => acc + (Number(row[key]) || 0), 0);
 
     return [
+      truncated ? 'TOTAL PARCIAL' : 'TOTAL',
       '',      // Status
       '',      // EMB
       '',      // Plastiron
-      'TOTAL', // Descrição
+      '',      // Descrição
       '',      // Ano
       '',      // Aplicação
       '',      // Cor
       '',      // Outros Dados
       ...monthKeys.map((k) => fmt(sum(k))),
     ];
-  }, []);
+  }, [truncated]);
 
   return (
     <div className="space-y-4 pt-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-bold">GERAL</h2>
           <p className="text-sm text-muted-foreground">
-            Todos os Produtos por Categoria × Mês {selectedYear ? `(${selectedYear})` : 'com seleção automática do último ano disponível'}
+            Todos os Produtos por Categoria × Mês {selectedYears.length ? `(${selectedYears.join(', ')})` : 'com seleção automática do último ano disponível'}
           </p>
         </div>
         <ExportButton
           reportType="geral"
           data={data.filter((row) => !row.isHeader)}
-          filename={`Plastiron_Geral_${selectedYear}.xlsx`}
+          filename={`Plastiron_Geral_${selectedYears.join('-')}.xlsx`}
         />
       </div>
 
@@ -127,8 +125,7 @@ export function GeralView({ rows, loading, error, truncated }: ReportViewProps<G
             ? 'Nenhum item configurado para o relatório geral ou nenhum dado encontrado para o ano selecionado.'
             : 'Nenhum ano disponível. Faça upload de um arquivo para gerar o relatório.'
         }
-        stickyColumns={4}
-        groupHeaders={groupHeaders}
+        stickyColumns={5}
         getTotalsRow={getTotalsRow}
       />
     </div>

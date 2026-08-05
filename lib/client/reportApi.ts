@@ -21,7 +21,7 @@ export const reportQueryKeys = {
     'reports',
     'query',
     request.report,
-    request.year,
+    request.years.join(','),
     request.client,
     request.product,
     request.semester,
@@ -58,6 +58,13 @@ export function fetchReportQuery(
   signal?: AbortSignal
 ): Promise<ReportQueryResponse> {
   return fetchJson(`/api/reports/query?${buildReportSearchParams(request)}`, signal);
+}
+
+export function fetchReportExport(
+  request: ParsedReportRequest,
+  signal?: AbortSignal
+): Promise<ReportQueryResponse> {
+  return fetchJson(`/api/reports/export?${buildReportSearchParams(request)}`, signal);
 }
 
 export function fetchReportOptions(
