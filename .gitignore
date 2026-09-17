@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/.local/
+/.worktrees/
 
 # next.js
 /.next/
