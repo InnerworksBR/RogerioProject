@@ -8,7 +8,7 @@ import { ProtectedNav } from '@/components/layout/ProtectedNav';
 const navItems = [
   { href: '/', label: 'Início' },
   { href: '/clientes', label: 'Clientes' },
-  { href: '/upload', label: 'Upload' },
+  { href: '/upload', label: 'Importações' },
   { href: '/reports', label: 'Relatórios' },
 ];
 
@@ -46,37 +46,37 @@ export default async function ProtectedLayout({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#030712]/50 backdrop-blur-2xl">
+      <a href="#conteudo" className="sr-only z-[100] rounded-lg bg-primary px-4 py-3 text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Ir para o conteúdo</a>
+      <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-4 sm:gap-8">
+            <div className="flex min-w-0 items-center gap-4">
               <Link href="/" className="group flex min-w-0 items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/20 text-lg font-bold text-indigo-400 border border-indigo-500/30 transition-transform group-hover:scale-110">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-lg font-bold text-white">
                   P
                 </div>
-                <span className="truncate text-lg font-bold tracking-tight text-white sm:text-xl">
+                <span className="truncate text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
                   <span className="sm:hidden">Plastiron</span>
                   <span className="hidden sm:inline">
                     Plastiron{' '}
-                    <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                    <span className="font-medium text-indigo-600">
                       Relatórios
                     </span>
                   </span>
                 </span>
               </Link>
 
-              <ProtectedNav items={currentNavItems} />
             </div>
 
             <UserMenu email={user.email ?? 'Usuário'} />
           </div>
 
-          <ProtectedNav items={currentNavItems} variant="mobile" />
+          <ProtectedNav items={currentNavItems} />
 
         </div>
-      </nav>
+      </header>
 
-      <main className="flex-1 px-4 py-4 sm:px-6 sm:py-6">{children}</main>
+      <main id="conteudo" tabIndex={-1} className="min-w-0 flex-1 px-4 py-6 outline-none sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }

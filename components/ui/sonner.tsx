@@ -3,14 +3,11 @@
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
-// O dark é forçado via className="...dark" no <html> em app/layout.tsx.
-// Fixamos theme="dark" diretamente para evitar dependência de ThemeProvider
-// (sem ele, useTheme() devolve o default "system" e os toasts poderiam
-// aparecer em modo claro no SO do usuário).
+// Keep notifications consistent with the application's light theme.
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
-      theme="dark"
+      theme="light"
       className="toaster group"
       icons={{
         success: (

@@ -75,12 +75,12 @@ export function ChangePasswordForm({ email }: { email: string }) {
       <div className="space-y-2">
         <label
           htmlFor="current-password"
-          className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+          className="text-xs font-bold uppercase tracking-wide text-slate-600"
         >
           Senha atual
         </label>
         <div className="relative">
-          <KeyRound className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <KeyRound className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-600" />
           <Input
             id="current-password"
             type="password"
@@ -97,12 +97,12 @@ export function ChangePasswordForm({ email }: { email: string }) {
       <div className="space-y-2">
         <label
           htmlFor="new-password"
-          className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+          className="text-xs font-bold uppercase tracking-wide text-slate-600"
         >
           Nova senha
         </label>
         <div className="relative">
-          <LockKeyhole className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <LockKeyhole className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-600" />
           <Input
             id="new-password"
             type="password"
@@ -119,12 +119,12 @@ export function ChangePasswordForm({ email }: { email: string }) {
       <div className="space-y-2">
         <label
           htmlFor="confirm-password"
-          className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+          className="text-xs font-bold uppercase tracking-wide text-slate-600"
         >
           Confirmar nova senha
         </label>
         <div className="relative">
-          <LockKeyhole className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <LockKeyhole className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-600" />
           <Input
             id="confirm-password"
             type="password"
@@ -139,7 +139,7 @@ export function ChangePasswordForm({ email }: { email: string }) {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
         </div>
       )}

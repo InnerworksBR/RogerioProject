@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AlertTriangle, Globe, LayoutDashboard, Settings2, TrendingUp, Upload } from 'lucide-react';
+import { AlertTriangle, ArrowRight, LayoutDashboard, Settings2, TrendingUp, Upload } from 'lucide-react';
 import { createServerSupabaseClient } from '@/lib/supabaseServer';
 import { getAvailableYearsForSupabase, getDashboardSummaryForSupabase } from '@/lib/server/reportData';
 import { SummaryCards } from '@/components/reports/SummaryCards';
@@ -46,25 +46,35 @@ export default async function DashboardPage() {
   }
 
   const quickActions = [
-    { href: '/clientes', title: 'Clientes', description: 'Prepare visitas, consolide razões sociais e compartilhe apresentações.', icon: LayoutDashboard, accent: 'text-indigo-400' },
-    { href: '/reports', title: 'Relatórios', description: 'Compare anos, filtre a operação e exporte as bases completas.', icon: TrendingUp, accent: 'text-cyan-400' },
-    { href: '/upload', title: 'Importações', description: 'Atualize a base do ERP e acompanhe cada arquivo processado.', icon: Upload, accent: 'text-emerald-400' },
-    ...(isLeader ? [{ href: '/config', title: 'Configuração', description: 'Mantenha os cadastros comerciais usados por toda a equipe.', icon: Settings2, accent: 'text-amber-400' }] : []),
+    { href: '/clientes', title: 'Clientes', description: 'Prepare visitas, consolide razões sociais e compartilhe apresentações.', icon: LayoutDashboard, accent: 'text-indigo-700' },
+    { href: '/reports', title: 'Relatórios', description: 'Compare anos, filtre a operação e exporte as bases completas.', icon: TrendingUp, accent: 'text-cyan-700' },
+    { href: '/upload', title: 'Importações', description: 'Atualize a base do ERP e acompanhe cada arquivo processado.', icon: Upload, accent: 'text-emerald-700' },
+    ...(isLeader ? [{ href: '/config', title: 'Configuração', description: 'Mantenha os cadastros comerciais usados por toda a equipe.', icon: Settings2, accent: 'text-amber-700' }] : []),
   ];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-10 pb-24">
-      <header className="space-y-4">
-        <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1 text-sm text-indigo-300">
-          <Globe className="mr-2 size-4" /> Torre de Controle — Operação Brasil
+    <div className="mx-auto max-w-7xl space-y-8 pb-12">
+      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-primary">Seu dia a dia comercial</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Visão geral das vendas</h1>
+          <p className="max-w-xl text-base leading-relaxed text-slate-600">Acompanhe os resultados de {latestYear} e encontre o próximo passo da sua operação.</p>
         </div>
-        <h1 className="text-4xl font-black tracking-tight text-white lg:text-6xl">
-          Visão Executiva <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">{latestYear}</span>
-        </h1>
-        <p className="max-w-2xl text-lg leading-relaxed text-slate-400">
-          Os principais números da operação carregados diretamente da base. A análise por IA permanece disponível sob demanda na Central de Relatórios.
-        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/reports" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50">Ver relatórios <ArrowRight className="size-4" /></Link>
+          <Link href="/upload" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-primary/90"><Upload className="size-4" /> Importar planilha</Link>
+        </div>
       </header>
+
+      {years.length === 0 && !summaryError && (
+        <section className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-slate-900">Comece pelo seu relatório de vendas</h2>
+          <p className="mt-1 text-sm text-slate-600">Importe uma planilha do ERP para preencher os indicadores e preparar suas análises.</p>
+          <ol className="mt-4 grid gap-3 text-sm text-slate-700 sm:grid-cols-3">
+            <li>1. Importe a planilha de vendas.</li><li>2. Escolha o período e o cliente.</li><li>3. Consulte e baixe os relatórios.</li>
+          </ol>
+        </section>
+      )}
 
       <SummaryCards data={summary} summaries={summary ? [{ year: latestYear, summary }] : []} loading={false} error={summaryError} />
 
@@ -76,15 +86,15 @@ export default async function DashboardPage() {
       )}
 
       <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-white">Módulos do sistema</h2>
+        <h2 className="text-xl font-semibold text-slate-900">O que você quer fazer?</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {quickActions.map((action) => {
             const Icon = action.icon;
             return (
-              <Link key={action.href} href={action.href} className="group relative overflow-hidden rounded-3xl border border-white/5 bg-white/5 p-6 transition-all hover:border-white/10 hover:bg-white/10">
+              <Link key={action.href} href={action.href} className="group rounded-2xl border border-border bg-white p-5 transition-colors hover:border-indigo-300 hover:bg-indigo-50/30">
                 <div className="relative z-10 space-y-4">
-                  <div className="flex size-12 items-center justify-center rounded-2xl border border-white/5 bg-white/5 transition-transform group-hover:scale-110"><Icon className={`size-6 ${action.accent}`} /></div>
-                  <div><h3 className="text-lg font-bold text-white">{action.title}</h3><p className="mt-2 text-sm leading-relaxed text-slate-400">{action.description}</p></div>
+                  <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50"><Icon className={`size-5 ${action.accent} `} /></div>
+                  <div><h3 className="flex items-center justify-between text-base font-semibold text-slate-900">{action.title}<ArrowRight className="size-4 text-slate-400 group-hover:text-primary" /></h3><p className="mt-2 text-sm leading-relaxed text-slate-600">{action.description}</p></div>
                 </div>
               </Link>
             );
@@ -97,12 +107,12 @@ export default async function DashboardPage() {
 
 function RankingCard({ title, rows, error }: { title: string; rows: Array<{ id: string; name: string; detail: string; value: number }>; error: boolean }) {
   return (
-    <div className="glass-card rounded-[2rem] p-6 sm:p-8">
-      <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-white"><TrendingUp className="size-6 text-indigo-400" /> {title}</h2>
+    <div className="glass-card rounded-2xl p-6 sm:p-8">
+      <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-slate-900"><TrendingUp className="size-6 text-indigo-700" /> {title}</h2>
       <div className="space-y-4">
-        {rows.map((row, index) => <div key={row.id} className="flex items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/5 p-4"><div className="flex min-w-0 items-center gap-4"><div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 font-bold text-indigo-400">{index + 1}</div><div className="min-w-0"><p className="truncate font-bold text-white">{row.name}</p><p className="text-sm text-slate-400">{row.detail}</p></div></div><p className="shrink-0 font-bold text-emerald-400">{fmtBRL(row.value)}</p></div>)}
-        {error && <p className="flex items-center gap-2 text-sm text-rose-400"><AlertTriangle className="size-4" /> Erro ao carregar o ranking.</p>}
-        {!error && rows.length === 0 && <p className="text-slate-400">Nenhum dado encontrado.</p>}
+        {rows.map((row, index) => <div key={row.id} className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"><div className="flex min-w-0 items-center gap-4"><div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 font-bold text-indigo-700">{index + 1}</div><div className="min-w-0"><p className="truncate font-bold text-slate-900">{row.name}</p><p className="text-sm text-slate-600">{row.detail}</p></div></div><p className="shrink-0 font-bold text-emerald-700">{fmtBRL(row.value)}</p></div>)}
+        {error && <p className="flex items-center gap-2 text-sm text-rose-700"><AlertTriangle className="size-4" /> Erro ao carregar o ranking.</p>}
+        {!error && rows.length === 0 && <p className="text-slate-600">Nenhum dado encontrado.</p>}
       </div>
     </div>
   );

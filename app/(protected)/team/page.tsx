@@ -42,10 +42,10 @@ const STATUS_LABELS: Record<LicenseRequestStatus, string> = {
 };
 
 const STATUS_STYLES: Record<LicenseRequestStatus, string> = {
-  pending: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
-  approved: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-  rejected: 'border-rose-500/30 bg-rose-500/10 text-rose-400',
-  cancelled: 'border-slate-500/30 bg-slate-500/10 text-slate-400',
+  pending: 'border-amber-500/30 bg-amber-500/10 text-amber-700',
+  approved: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700',
+  rejected: 'border-rose-500/30 bg-rose-500/10 text-rose-700',
+  cancelled: 'border-slate-500/30 bg-slate-500/10 text-slate-600',
 };
 
 export default function TeamManagementPage() {
@@ -223,14 +223,14 @@ export default function TeamManagementPage() {
     }
   };
 
-  if (loading) return <div className="p-10 text-center text-slate-400">Carregando equipe...</div>;
+  if (loading) return <div className="p-10 text-center text-slate-600">Carregando equipe...</div>;
 
   if (!isLeader) {
     return (
-      <div className="mx-auto mt-10 max-w-2xl rounded-[2rem] p-10 text-center glass-card">
-        <Shield className="mx-auto mb-4 h-12 w-12 text-rose-500" />
-        <h2 className="mb-2 text-2xl font-bold text-white">Acesso restrito</h2>
-        <p className="text-slate-400">Apenas líderes podem gerenciar representantes e licenças.</p>
+      <div className="mx-auto mt-10 max-w-2xl rounded-2xl p-10 text-center glass-card">
+        <Shield className="mx-auto mb-4 h-12 w-12 text-rose-700" />
+        <h2 className="mb-2 text-2xl font-bold text-slate-900">Acesso restrito</h2>
+        <p className="text-slate-600">Apenas líderes podem gerenciar representantes e licenças.</p>
       </div>
     );
   }
@@ -244,42 +244,42 @@ export default function TeamManagementPage() {
     <div className="mx-auto max-w-6xl space-y-8 pb-20">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white">Gestão da equipe</h1>
-          <p className="mt-2 text-slate-400">Convide representantes por e-mail e gerencie suas licenças.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Gestão da equipe</h1>
+          <p className="mt-2 text-slate-600">Convide representantes por e-mail e gerencie suas licenças.</p>
         </div>
         <div className="flex items-center gap-4 rounded-2xl border border-indigo-500/30 px-6 py-4 glass-card">
-          <Users className="h-6 w-6 text-indigo-400" />
-          <p className="font-bold text-white">{activeReps.length} / {licenseCount} licenças usadas</p>
+          <Users className="h-6 w-6 text-indigo-700" />
+          <p className="font-bold text-slate-900">{activeReps.length} / {licenseCount} licenças usadas</p>
         </div>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
-        <section className="rounded-[2rem] p-6 glass-card">
-          <h2 className="mb-6 text-xl font-bold text-white">Representantes</h2>
+        <section className="rounded-2xl p-6 glass-card">
+          <h2 className="mb-6 text-xl font-bold text-slate-900">Representantes</h2>
           {reps.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-white/10 py-10 text-center text-slate-400">
+            <p className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-slate-600">
               Nenhum representante cadastrado.
             </p>
           ) : reps.map((rep) => (
-            <div key={rep.id} className={`mb-3 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${rep.is_active ? 'border-white/5 bg-[#030712]/50' : 'border-amber-500/20 bg-amber-500/5'}`}>
+            <div key={rep.id} className={`mb-3 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between ${rep.is_active ? 'border-slate-200 bg-white' : 'border-amber-500/20 bg-amber-500/5'} `}>
               <div>
-                <p className="flex items-center gap-2 font-bold text-white">
+                <p className="flex items-center gap-2 font-bold text-slate-900">
                   {rep.name}
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${rep.is_active ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}`}>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold uppercase ${rep.is_active ? 'bg-emerald-500/15 text-emerald-700' : 'bg-amber-500/15 text-amber-700'} `}>
                     {rep.is_active ? 'Ativo' : 'Inativo'}
                   </span>
                 </p>
-                <p className="flex items-center gap-1 text-sm text-slate-400"><Mail className="h-3 w-3" />{rep.email}</p>
+                <p className="flex items-center gap-1 text-sm text-slate-600"><Mail className="h-3 w-3" />{rep.email}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <p className="mr-2 text-sm text-slate-400">
+                <p className="mr-2 text-sm text-slate-600">
                   {rep.last_sign_in_at ? new Date(rep.last_sign_in_at).toLocaleDateString('pt-BR') : 'Convite pendente'}
                 </p>
                 <Button variant="outline" size="sm" disabled={processingId === rep.id} onClick={() => void updateRepStatus(rep)}>
                   {rep.is_active ? <Power className="mr-1 h-3 w-3" /> : <RotateCcw className="mr-1 h-3 w-3" />}
                   {rep.is_active ? 'Inativar' : 'Reativar'}
                 </Button>
-                <Button variant="outline" size="sm" disabled={processingId === rep.id} onClick={() => void deleteRep(rep)} className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10">
+                <Button variant="outline" size="sm" disabled={processingId === rep.id} onClick={() => void deleteRep(rep)} className="border-rose-500/30 text-rose-700 hover:bg-rose-500/10">
                   <Trash2 className="mr-1 h-3 w-3" />Excluir
                 </Button>
               </div>
@@ -287,17 +287,17 @@ export default function TeamManagementPage() {
           ))}
         </section>
 
-        <section className="rounded-[2rem] border border-indigo-500/20 p-6 glass-card">
-          <h2 className="mb-2 flex items-center gap-2 text-xl font-bold text-white"><Plus className="h-5 w-5 text-indigo-400" />Novo representante</h2>
-          <p className="mb-6 text-sm text-slate-400">O representante receberá um e-mail para definir a própria senha.</p>
+        <section className="rounded-2xl border border-indigo-500/20 p-6 glass-card">
+          <h2 className="mb-2 flex items-center gap-2 text-xl font-bold text-slate-900"><Plus className="h-5 w-5 text-indigo-700" />Novo representante</h2>
+          <p className="mb-6 text-sm text-slate-600">O representante receberá um e-mail para definir a própria senha.</p>
           {licensesAvailable <= 0 ? (
-            <p className="flex gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-400">
+            <p className="flex gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700">
               <AlertTriangle className="h-5 w-5 shrink-0" />Limite de licenças atingido. Contate o suporte para expandir a operação.
             </p>
           ) : (
             <form onSubmit={handleInvite} className="space-y-4">
               <div className="space-y-1.5">
-                <label htmlFor="invite-name" className="block text-sm font-medium text-slate-300">
+                <label htmlFor="invite-name" className="block text-sm font-medium text-slate-700">
                   Nome completo
                 </label>
                 <Input
@@ -309,7 +309,7 @@ export default function TeamManagementPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label htmlFor="invite-email" className="block text-sm font-medium text-slate-300">
+                <label htmlFor="invite-email" className="block text-sm font-medium text-slate-700">
                   E-mail
                 </label>
                 <Input
@@ -329,12 +329,12 @@ export default function TeamManagementPage() {
         </section>
       </div>
 
-      <section className="space-y-6 rounded-[2rem] border border-indigo-500/20 p-6 glass-card">
+      <section className="space-y-6 rounded-2xl border border-indigo-500/20 p-6 glass-card">
         <div>
-          <h2 className="flex items-center gap-2 text-xl font-bold text-white">
-            <Sparkles className="h-5 w-5 text-indigo-400" />Solicitar novas licencas
+          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+            <Sparkles className="h-5 w-5 text-indigo-700" />Solicitar novas licenças
           </h2>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-2 text-sm text-slate-600">
             Escolha o plano ideal para sua operação. A liberação das licenças acontece após análise comercial.
           </p>
         </div>
@@ -349,21 +349,21 @@ export default function TeamManagementPage() {
                   type="button"
                   aria-pressed={isSelected}
                   onClick={() => setSelectedPlan(plan.id)}
-                  className={`rounded-2xl border p-5 text-left transition-all ${isSelected ? 'border-indigo-400 bg-indigo-500/15 ring-2 ring-indigo-500/20' : 'border-white/10 bg-[#030712]/40 hover:border-indigo-500/40'}`}
+                  className={`rounded-2xl border p-5 text-left transition-all ${isSelected ? 'border-indigo-400 bg-indigo-500/15 ring-2 ring-indigo-500/20' : 'border-slate-200 bg-white hover:border-indigo-500/40'} `}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-lg font-bold text-white">{plan.name}</p>
-                      <p className="mt-1 text-sm font-medium text-indigo-300">{plan.support}</p>
+                      <p className="text-lg font-bold text-slate-900">{plan.name}</p>
+                      <p className="mt-1 text-sm font-medium text-indigo-700">{plan.support}</p>
                     </div>
-                    <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${isSelected ? 'border-indigo-400 bg-indigo-500 text-white' : 'border-slate-600 text-transparent'}`}>
+                    <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${isSelected ? 'border-indigo-400 bg-indigo-500 text-white' : 'border-slate-200 text-transparent'} `}>
                       <Check className="h-4 w-4" />
                     </span>
                   </div>
                   <ul className="mt-4 space-y-2">
                     {plan.benefits.map((benefit) => (
-                      <li key={benefit} className="flex gap-2 text-sm text-slate-300">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />{benefit}
+                      <li key={benefit} className="flex gap-2 text-sm text-slate-700">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />{benefit}
                       </li>
                     ))}
                   </ul>
@@ -373,18 +373,18 @@ export default function TeamManagementPage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[180px_1fr_auto] lg:items-end">
-            <label className="space-y-2 text-sm font-medium text-slate-300">
+            <label className="space-y-2 text-sm font-medium text-slate-700">
               Quantidade de licenças
               <Input required type="number" min="1" step="1" value={requestedQuantity} onChange={(event) => setRequestedQuantity(event.target.value)} />
             </label>
-            <label className="space-y-2 text-sm font-medium text-slate-300">
+            <label className="space-y-2 text-sm font-medium text-slate-700">
               Observação opcional
               <textarea
                 maxLength={1000}
                 value={requestNotes}
                 onChange={(event) => setRequestNotes(event.target.value)}
                 placeholder="Conte brevemente como pretende expandir a equipe."
-                className="flex min-h-10 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm text-white shadow-xs outline-none placeholder:text-slate-500 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/30"
+                className="flex min-h-10 w-full rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm text-slate-900 shadow-xs outline-none placeholder:text-slate-600 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/30"
               />
             </label>
             <Button type="submit" disabled={isRequestingLicenses} className="bg-indigo-600 text-white hover:bg-indigo-700">
@@ -394,30 +394,30 @@ export default function TeamManagementPage() {
         </form>
       </section>
 
-      <section className="rounded-[2rem] p-6 glass-card">
-        <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-white">
-          <Clock3 className="h-5 w-5 text-indigo-400" />Histórico de solicitações
+      <section className="rounded-2xl p-6 glass-card">
+        <h2 className="mb-6 flex items-center gap-2 text-xl font-bold text-slate-900">
+          <Clock3 className="h-5 w-5 text-indigo-700" />Histórico de solicitações
         </h2>
         {licenseRequests.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-white/10 py-8 text-center text-slate-400">
+          <p className="rounded-2xl border border-dashed border-slate-200 py-8 text-center text-slate-600">
             Nenhuma solicitação de licença enviada.
           </p>
         ) : licenseRequests.map((request) => (
-          <div key={request.id} className="mb-3 flex flex-col gap-3 rounded-2xl border border-white/5 bg-[#030712]/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div key={request.id} className="mb-3 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-bold text-white">{LICENSE_PLANS.find((plan) => plan.id === request.plan)?.name}</p>
-                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase ${STATUS_STYLES[request.status]}`}>
+                <p className="font-bold text-slate-900">{LICENSE_PLANS.find((plan) => plan.id === request.plan)?.name}</p>
+                <span className={`rounded-full border px-2 py-0.5 text-xs font-bold uppercase ${STATUS_STYLES[request.status]} `}>
                   {STATUS_LABELS[request.status]}
                 </span>
               </div>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-slate-600">
                 {request.quantity} {request.quantity === 1 ? 'licença solicitada' : 'licenças solicitadas'} em {new Date(request.created_at).toLocaleDateString('pt-BR')}
               </p>
-              {request.notes && <p className="mt-2 text-sm text-slate-300">{request.notes}</p>}
+              {request.notes && <p className="mt-2 text-sm text-slate-700">{request.notes}</p>}
             </div>
             {request.status === 'pending' && (
-              <Button variant="outline" size="sm" disabled={cancellingRequestId === request.id} onClick={() => void cancelLicenseRequest(request.id)} className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10">
+              <Button variant="outline" size="sm" disabled={cancellingRequestId === request.id} onClick={() => void cancelLicenseRequest(request.id)} className="border-rose-500/30 text-rose-700 hover:bg-rose-500/10">
                 <X className="mr-1 h-3 w-3" />Cancelar
               </Button>
             )}

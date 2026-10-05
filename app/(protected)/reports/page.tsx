@@ -95,20 +95,18 @@ export default function ReportsPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="relative flex flex-col gap-6 overflow-hidden rounded-[2rem] bg-slate-900 p-6 text-white shadow-2xl shadow-indigo-500/20 dark:bg-slate-900/50 sm:p-8 md:flex-row md:items-center md:justify-between">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 blur-[100px] rounded-full -mr-32 -mt-32" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full -ml-32 -mb-32" />
-
-        <div className="relative z-10">
-          <h1 className="text-4xl font-black tracking-tight mb-2">Relatórios <span className="text-indigo-400">Analíticos</span></h1>
-          <p className="text-slate-400 max-w-md font-medium">
-            Explore os dados comerciais da Plastiron com filtros avançados e exportação consolidada para Excel.
+      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="mb-2 text-sm font-medium text-primary">Análise de vendas</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Relatórios</h1>
+          <p className="mt-2 max-w-xl text-base text-slate-600">
+            Escolha o período, explore os resultados e baixe as planilhas em Excel.
           </p>
         </div>
         <div className="relative z-10">
           <DownloadAllButton />
         </div>
-      </div>
+      </header>
 
       {/* Global filters */}
       <ReportFilterBar
@@ -128,26 +126,26 @@ export default function ReportsPage() {
       <ExecutiveSummaryCard />
 
       {/* Tabs Layout */}
-      <div className="glass-card rounded-[2rem] p-6 lg:p-8">
+      <div className="glass-card min-w-0 rounded-2xl p-4 sm:p-6">
         <Tabs value={activeReport.replace('_', '-')} onValueChange={(value) => setActiveReport(value.replace('-', '_') as ReportType)} className="w-full">
-          <TabsList className="flex overflow-x-auto w-full bg-[#030712]/50 border border-white/5 p-1.5 rounded-2xl mb-8 space-x-1 custom-scrollbar">
-            <TabsTrigger value="tabela-dinamica" className="whitespace-nowrap rounded-xl font-semibold py-3 px-6 data-[state=active]:bg-indigo-500/20 data-[state=active]:text-indigo-300 data-[state=active]:shadow-sm transition-all">
+          <TabsList aria-label="Tipo de relatório" className="!h-auto flex w-full justify-start gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 mb-4 custom-scrollbar">
+            <TabsTrigger value="tabela-dinamica" className="h-11 flex-none rounded-lg px-4 data-active:bg-white data-active:text-indigo-700 data-active:shadow-sm">
               <TrendingUp className="mr-2 h-4 w-4" />
               Tabela Dinâmica
             </TabsTrigger>
-            <TabsTrigger value="base-compra" className="whitespace-nowrap rounded-xl font-semibold py-3 px-6 data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-300 data-[state=active]:shadow-sm transition-all">
+            <TabsTrigger value="base-compra" className="h-11 flex-none rounded-lg px-4 data-active:bg-white data-active:text-indigo-700 data-active:shadow-sm">
               <ShoppingCart className="mr-2 h-4 w-4" />
               Base de Compra
             </TabsTrigger>
-            <TabsTrigger value="base-itens" className="whitespace-nowrap rounded-xl font-semibold py-3 px-6 data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-300 data-[state=active]:shadow-sm transition-all">
+            <TabsTrigger value="base-itens" className="h-11 flex-none rounded-lg px-4 data-active:bg-white data-active:text-indigo-700 data-active:shadow-sm">
               <Layers className="mr-2 h-4 w-4" />
               Base de Itens
             </TabsTrigger>
-            <TabsTrigger value="bagagitos" className="whitespace-nowrap rounded-xl font-semibold py-3 px-6 data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-300 data-[state=active]:shadow-sm transition-all">
+            <TabsTrigger value="bagagitos" className="h-11 flex-none rounded-lg px-4 data-active:bg-white data-active:text-indigo-700 data-active:shadow-sm">
               <Package className="mr-2 h-4 w-4" />
               Bagagitos
             </TabsTrigger>
-            <TabsTrigger value="geral" className="whitespace-nowrap rounded-xl font-semibold py-3 px-6 data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-300 data-[state=active]:shadow-sm transition-all">
+            <TabsTrigger value="geral" className="h-11 flex-none rounded-lg px-4 data-active:bg-white data-active:text-indigo-700 data-active:shadow-sm">
               <TrendingUp className="mr-2 h-4 w-4" />
               Visão Geral
             </TabsTrigger>
@@ -226,7 +224,7 @@ function DownloadAllButton() {
     <Button
       onClick={handleDownloadAll}
       disabled={downloading || !selectedYear}
-      className="premium-gradient rounded-xl px-6 h-12 font-bold transition-all hover:scale-105 active:scale-95 text-white border-0"
+      className="premium-gradient h-11 w-full rounded-lg px-4 font-medium sm:w-auto"
     >
       {downloading ? (
         <>
@@ -236,7 +234,7 @@ function DownloadAllButton() {
       ) : (
         <>
           <Download className="mr-2 h-5 w-5" />
-          Baixar Tudo Analítico (.xlsx)
+          Baixar todos em Excel
         </>
       )}
     </Button>

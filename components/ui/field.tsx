@@ -30,7 +30,7 @@ function FieldLabel({
     <FieldPrimitive.Label
       data-slot="field-label"
       className={cn(
-        "block text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400",
+        "block text-xs font-bold uppercase tracking-wide text-slate-600",
         className
       )}
       {...props}

@@ -15,14 +15,13 @@ export default function GlobalError({
   }, [error])
 
   return (
-    <html lang="pt-BR" className="dark">
-      <body className="min-h-screen bg-[#030712] font-sans text-slate-200 flex items-center justify-center px-4">
+    <html lang="pt-BR" style={{ colorScheme: 'light' }}>
+      <body className="min-h-screen bg-white font-sans text-slate-700 flex items-center justify-center px-4">
         <div
-          className="rounded-[2rem] p-10 text-center max-w-lg w-full border border-rose-500/20"
+          className="rounded-2xl p-10 text-center max-w-lg w-full border border-rose-500/20"
           style={{
             background:
-              'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)',
-            backdropFilter: 'blur(20px)',
+              '#ffffff',
           }}
         >
           <div className="flex justify-center mb-6">
@@ -32,20 +31,20 @@ export default function GlobalError({
             >
               <AlertTriangle
                 className="h-8 w-8"
-                style={{ color: 'rgb(251,113,133)' }}
+                style={{ color: '#be2340' }}
               />
             </div>
           </div>
 
           <h2
             className="text-2xl font-bold mb-3"
-            style={{ color: '#fff' }}
+            style={{ color: '#17243c' }}
           >
             Falha crítica na aplicação
           </h2>
           <p
             className="leading-relaxed mb-8"
-            style={{ color: 'rgb(148,163,184)' }}
+            style={{ color: '#52627a' }}
           >
             Ocorreu um erro grave ao carregar o sistema. Tente recarregar a página. Se o problema continuar, entre em contato com o suporte técnico.
           </p>
@@ -63,9 +62,9 @@ export default function GlobalError({
             onClick={() => unstable_retry()}
             className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold transition-all"
             style={{
-              background: 'rgba(99,102,241,0.2)',
-              border: '1px solid rgba(99,102,241,0.3)',
-              color: 'rgb(165,180,252)',
+              background: '#3558c8',
+              border: '1px solid #3558c8',
+              color: '#ffffff',
             }}
           >
             <RefreshCw className="h-4 w-4" />

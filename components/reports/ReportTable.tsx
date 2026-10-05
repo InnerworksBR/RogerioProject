@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -49,6 +49,15 @@ export function ReportTable<T>({
   getTotalsRow,
 }: Props<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const element = parentRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setContainerWidth(entry.contentRect.width));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [loading, data.length]);
 
   const table = useReactTable({
     data,
@@ -58,6 +67,9 @@ export function ReportTable<T>({
 
   const visibleColumns = table.getVisibleLeafColumns();
   const rows = table.getRowModel().rows;
+  const pinnedWidth = visibleColumns.slice(0, stickyColumns).reduce((width, column) => width + column.getSize(), 0);
+  // Leave enough space to read monthly values on narrow screens.
+  const pinnedColumns = containerWidth >= pinnedWidth + 160 ? stickyColumns : 0;
   const stickyOffsets = visibleColumns.map((_, index) =>
     visibleColumns
       .slice(0, index)
@@ -97,7 +109,7 @@ export function ReportTable<T>({
   const getColumnStyle = (colIdx: number, width: number, isHeader = false) => ({
     width,
     minWidth: width,
-    ...(colIdx < stickyColumns
+    ...(colIdx < pinnedColumns
       ? {
           left: stickyOffsets[colIdx] ?? 0,
           zIndex: isHeader ? 20 + (stickyColumns - colIdx) : 10 + (stickyColumns - colIdx),
@@ -117,11 +129,15 @@ export function ReportTable<T>({
       />
       <div
         ref={parentRef}
-        className="overflow-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#030712] shadow-xl shadow-slate-200/20 dark:shadow-none custom-scrollbar"
-        style={{ maxHeight: 'calc(100vh - 340px)' }}
+        role="region"
+        aria-label="Dados do relatório. Role horizontalmente para ver todas as colunas."
+        tabIndex={0}
+        className="overflow-auto rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/20 custom-scrollbar"
+        style={{ maxHeight: 'clamp(240px, calc(100vh - 320px), 640px)' }}
       >
         <table className="min-w-full text-sm border-collapse table-fixed">
-          <thead className="sticky top-0 z-20 bg-white/90 dark:bg-[#030712]/90 backdrop-blur-md">
+          <caption className="sr-only">Dados e totais do relatório selecionado</caption>
+          <thead className="sticky top-0 z-20 bg-slate-50 backdrop-blur-md">
             {/* Linha de grupos (ex.: Ano) — opcional */}
             {groupHeaders && groupHeaders.length > 0 && (
               <tr>
@@ -145,7 +161,8 @@ export function ReportTable<T>({
                       <th
                         key={`group-${colIdx}`}
                         colSpan={group.span}
-                        className="px-4 py-2 text-center text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.2em] whitespace-nowrap border-b-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-900/20"
+                        scope="colgroup"
+                        className="px-4 py-2 text-center text-xs font-bold text-indigo-600 uppercase tracking-wide whitespace-nowrap border-b-2 border-indigo-200 bg-indigo-50/60"
                         style={{ width: groupWidth, minWidth: groupWidth }}
                       >
                         {group.label}
@@ -157,9 +174,7 @@ export function ReportTable<T>({
                   return (
                     <th
                       key={`group-empty-${colIdx}`}
-                      className={`
-                        px-4 py-2 border-b-2 border-slate-100 dark:border-white/5
-                        ${colIdx < stickyColumns ? 'md:sticky bg-white dark:bg-[#030712] z-30' : ''}
+                      className={`px-4 py-2 border-b-2 border-slate-100 ${colIdx < pinnedColumns ? 'sticky bg-white z-30' : ''}
                       `}
                       style={getColumnStyle(colIdx, col.getSize(), true)}
                     />
@@ -174,10 +189,8 @@ export function ReportTable<T>({
                 {headerGroup.headers.map((header, colIdx) => (
                   <th
                     key={header.id}
-                    className={`
-                      px-4 py-3 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400
-                      uppercase tracking-[0.15em] whitespace-nowrap border-b border-slate-200 dark:border-white/5
-                      ${colIdx < stickyColumns ? 'md:sticky bg-white dark:bg-[#030712] shadow-[6px_0_12px_-8px_rgba(15,23,42,0.28)] dark:shadow-[6px_0_12px_-8px_rgba(0,0,0,0.8)] dark:border-r z-30' : ''}
+                    scope="col"
+                    className={`px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wide whitespace-nowrap border-b border-slate-200 ${colIdx < pinnedColumns ? 'sticky bg-white shadow-[6px_0_12px_-8px_rgba(15,23,42,0.28)] z-30' : ''}
                     `}
                     style={getColumnStyle(colIdx, header.getSize(), true)}
                   >
@@ -205,14 +218,12 @@ export function ReportTable<T>({
               return (
                 <tr
                   key={row.id}
-                  className="border-b border-slate-100 dark:border-white/5 hover:bg-indigo-50/30 dark:hover:bg-indigo-500/10 transition-colors group"
+                  className="border-b border-slate-100 hover:bg-indigo-50/30 transition-colors group"
                 >
                   {row.getVisibleCells().map((cell, colIdx) => (
                     <td
                       key={cell.id}
-                      className={`
-                        px-4 py-2.5 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium truncate
-                        ${colIdx < stickyColumns ? 'md:sticky bg-white dark:bg-[#030712] shadow-[6px_0_12px_-8px_rgba(15,23,42,0.18)] dark:shadow-[6px_0_12px_-8px_rgba(0,0,0,0.8)] dark:border-r dark:border-white/5 group-hover:bg-indigo-50/30 group-hover:dark:bg-[#080d1e] z-20' : ''}
+                      className={`px-4 py-2.5 whitespace-nowrap text-slate-700 font-medium tabular-nums truncate ${colIdx < pinnedColumns ? 'sticky bg-white shadow-[6px_0_12px_-8px_rgba(15,23,42,0.18)] group-hover:bg-indigo-50/30 z-20' : ''}
                       `}
                       style={getColumnStyle(colIdx, cell.column.getSize())}
                       title={typeof cell.getValue() === 'string' || typeof cell.getValue() === 'number' ? String(cell.getValue()) : undefined}
@@ -240,14 +251,12 @@ export function ReportTable<T>({
 
           {/* Rodapé de totais — fora do range virtualizado */}
           {totalsRow && totalsRow.length > 0 && (
-            <tfoot className="sticky bottom-0 z-20 bg-white/95 dark:bg-[#030712]/95 backdrop-blur-md">
-              <tr className="border-t-2 border-slate-300 dark:border-slate-700">
+            <tfoot className="sticky bottom-0 z-20 bg-slate-50 backdrop-blur-md">
+              <tr className="border-t-2 border-slate-300">
                 {totalsRow.map((cell, colIdx) => (
                   <td
                     key={`total-${colIdx}`}
-                    className={`
-                      px-4 py-3 whitespace-nowrap font-bold text-slate-900 dark:text-white truncate
-                      ${colIdx < stickyColumns ? 'md:sticky bg-white dark:bg-[#030712] shadow-[6px_0_12px_-8px_rgba(15,23,42,0.18)] dark:shadow-[6px_0_12px_-8px_rgba(0,0,0,0.8)] dark:border-r dark:border-white/5 z-30' : ''}
+                    className={`px-4 py-3 whitespace-nowrap font-bold text-slate-900 truncate ${colIdx < pinnedColumns ? 'sticky bg-white shadow-[6px_0_12px_-8px_rgba(15,23,42,0.18)] z-30' : ''}
                     `}
                     style={getColumnStyle(colIdx, visibleColumns[colIdx]?.getSize() ?? 100)}
                   >

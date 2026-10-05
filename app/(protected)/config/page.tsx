@@ -251,10 +251,10 @@ export default function ConfigPage() {
       </div>
 
       {seedPreview && (
-        <Card className="border-indigo-200/60 bg-indigo-50/50 dark:border-indigo-900/40 dark:bg-indigo-950/10">
+        <Card className="border-indigo-200/60 bg-indigo-50/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="size-4 text-indigo-500" />
+              <Sparkles className="size-4 text-indigo-700" />
               Prévia do seed inicial
             </CardTitle>
             <CardDescription>
@@ -288,17 +288,17 @@ export default function ConfigPage() {
             </div>
 
             {seedPreview.bagagitos.lowConfidencePreview.length > 0 && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 dark:border-amber-900/60 dark:bg-amber-950/20">
-                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-300">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-700">
                   <AlertTriangle className="size-4" />
                   Prefixo `4` não será usado sozinho como regra de bagagito
                 </div>
-                <p className="mb-3 text-sm text-amber-700/90 dark:text-amber-300/90">
+                <p className="mb-3 text-sm text-amber-700/90">
                   Os itens abaixo aparecem só como revisão manual opcional porque o prefixo `4` trouxe muitos falsos positivos na base atual.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {seedPreview.bagagitos.lowConfidencePreview.map((item) => (
-                    <Badge key={item.cod_referencia} variant="outline" className="border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300">
+                    <Badge key={item.cod_referencia} variant="outline" className="border-amber-300 text-amber-700">
                       {item.cod_referencia}
                     </Badge>
                   ))}
@@ -347,7 +347,7 @@ export default function ConfigPage() {
 
               <CardContent>
                 {loading ? (
-                  <div className="flex justify-center p-8 text-blue-500">
+                  <div className="flex justify-center p-8 text-blue-700">
                     <Loader2 className="size-8 animate-spin" />
                   </div>
                 ) : (
@@ -356,9 +356,9 @@ export default function ConfigPage() {
                       <thead>
                         <tr className="border-b text-left font-medium text-muted-foreground">
                           <th className="p-2 w-32">Cód. Referência</th>
-                          <th className="p-2">Descrição (Label)</th>
+                          <th className="p-2">Descrição</th>
                           {key === 'geral' && <th className="p-2">Categoria</th>}
-                          <th className="p-2">Campos Extra</th>
+                          <th className="p-2">Informações adicionais</th>
                           <th className="p-2 w-24">Ações</th>
                         </tr>
                       </thead>
@@ -398,15 +398,15 @@ export default function ConfigPage() {
                               <tr
                                 key={item.id}
                                 className={`border-b transition-colors hover:bg-muted/50 ${
-                                  needsReview ? 'bg-amber-50/60 dark:bg-amber-950/10' : ''
-                                }`}
+                                  needsReview ? 'bg-amber-50/60' : ''
+                                } `}
                               >
                                 <td className="p-2 font-mono">{item.cod_referencia}</td>
                                 <td className="p-2">{item.label}</td>
                                 {key === 'geral' && (
                                   <td className="p-2">
                                     {needsReview ? (
-                                      <Badge variant="outline" className="border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-300">
+                                      <Badge variant="outline" className="border-amber-300 text-amber-700">
                                         {item.categoria || 'Sem categoria'}
                                       </Badge>
                                     ) : (
@@ -418,7 +418,7 @@ export default function ConfigPage() {
                                   <div className="flex flex-wrap gap-1">
                                     {Object.entries(item.extra_data || {}).map(([field, value]) =>
                                       value ? (
-                                        <Badge key={field} variant="secondary" className="text-[10px] uppercase">
+                                        <Badge key={field} variant="secondary" className="text-xs uppercase">
                                           {field}: {value}
                                         </Badge>
                                       ) : null
@@ -477,21 +477,21 @@ function SeedSummaryTile({
   helper?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/60 bg-white/70 p-4 dark:border-slate-800/70 dark:bg-slate-950/30">
-      <p className="text-sm font-semibold text-slate-900 dark:text-white">{title}</p>
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-sm font-semibold text-slate-900">{title}</p>
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-3xl font-black tracking-tight text-slate-950 dark:text-white">
+        <span className="text-3xl font-bold tracking-tight text-slate-950">
           {suggestedCount}
         </span>
-        <span className="text-xs font-medium uppercase tracking-[0.15em] text-slate-400">
+        <span className="text-xs font-medium uppercase tracking-wide text-slate-600">
           sugestões
         </span>
       </div>
-      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-sm text-slate-600">
         {existingCount} itens já cadastrados.
       </p>
       {helper && (
-        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">{helper}</p>
+        <p className="mt-2 text-xs text-slate-600">{helper}</p>
       )}
     </div>
   );
@@ -505,28 +505,28 @@ function SeedPreviewList({
   items: ConfigSeedSuggestion[];
 }) {
   return (
-    <div className="rounded-2xl border border-white/60 bg-white/70 p-4 dark:border-slate-800/70 dark:bg-slate-950/30">
-      <p className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">{title}</p>
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="mb-3 text-sm font-semibold text-slate-900">{title}</p>
       <div className="space-y-2">
         {items.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-slate-600">
             Nenhuma sugestão pendente.
           </p>
         ) : (
           items.map((item) => (
             <div
               key={`${title}-${item.cod_referencia}`}
-              className="rounded-xl border border-slate-200/70 px-3 py-2 text-sm dark:border-slate-800/70"
+              className="rounded-xl border border-slate-200/70 px-3 py-2 text-sm"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="font-mono font-semibold text-slate-700 dark:text-slate-200">
+                <span className="font-mono font-semibold text-slate-700">
                   {item.cod_referencia}
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-slate-600">
                   {item.total_valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
               </div>
-              <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 line-clamp-2 text-sm text-slate-600">
                 {item.label}
               </p>
             </div>
@@ -553,7 +553,7 @@ function EditRow({
   const extraFields = EXTRA_FIELDS[reportKey];
 
   return (
-    <tr className="animate-in fade-in bg-blue-50/50 duration-200 dark:bg-blue-900/10">
+    <tr className="animate-in fade-in bg-blue-50/50 duration-200">
       <td className="p-2">
         <Input
           aria-label="Código de referência"
@@ -606,7 +606,7 @@ function EditRow({
                   },
                 }))
               }
-              className="h-7 text-[10px] uppercase"
+              className="h-7 text-xs uppercase"
             />
           ))}
         </div>

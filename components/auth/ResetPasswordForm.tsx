@@ -66,7 +66,7 @@ export function ResetPasswordForm() {
 
   if (sessionState === 'checking') {
     return (
-      <div className="flex items-center justify-center py-8 text-slate-400">
+      <div className="flex items-center justify-center py-8 text-slate-600">
         <Loader2 className="mr-2 size-5 animate-spin" />
         Validando o link...
       </div>
@@ -76,13 +76,13 @@ export function ResetPasswordForm() {
   if (sessionState === 'missing') {
     return (
       <div className="space-y-6 text-center">
-        <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+        <p className="text-sm leading-relaxed text-slate-600">
           O link de redefinição é inválido ou expirou. Solicite um novo link
           para continuar.
         </p>
         <Link
           href="/recuperar-senha"
-          className="inline-flex items-center justify-center text-sm font-semibold text-indigo-500"
+          className="inline-flex items-center justify-center text-sm font-semibold text-indigo-700"
         >
           Solicitar novo link
         </Link>
@@ -93,10 +93,10 @@ export function ResetPasswordForm() {
   if (done) {
     return (
       <div className="space-y-4 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-500">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-700">
           <CheckCircle2 className="size-6" />
         </div>
-        <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+        <p className="text-sm leading-relaxed text-slate-600">
           Senha atualizada com sucesso. Redirecionando...
         </p>
       </div>
@@ -108,12 +108,12 @@ export function ResetPasswordForm() {
       <div className="space-y-2">
         <label
           htmlFor="reset-password"
-          className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+          className="text-xs font-bold uppercase tracking-wide text-slate-600"
         >
           Nova senha
         </label>
         <div className="relative">
-          <LockKeyhole className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <LockKeyhole className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-600" />
           <Input
             id="reset-password"
             type="password"
@@ -121,7 +121,7 @@ export function ResetPasswordForm() {
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Mínimo de 8 caracteres"
             autoComplete="new-password"
-            className="h-12 rounded-xl border-white/60 bg-white/60 pl-10 dark:border-slate-700/60 dark:bg-slate-900/60"
+            className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-10"
             required
           />
         </div>
@@ -130,12 +130,12 @@ export function ResetPasswordForm() {
       <div className="space-y-2">
         <label
           htmlFor="reset-confirm"
-          className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400"
+          className="text-xs font-bold uppercase tracking-wide text-slate-600"
         >
           Confirmar nova senha
         </label>
         <div className="relative">
-          <LockKeyhole className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <LockKeyhole className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-600" />
           <Input
             id="reset-confirm"
             type="password"
@@ -143,14 +143,14 @@ export function ResetPasswordForm() {
             onChange={(event) => setConfirmPassword(event.target.value)}
             placeholder="Repita a nova senha"
             autoComplete="new-password"
-            className="h-12 rounded-xl border-white/60 bg-white/60 pl-10 dark:border-slate-700/60 dark:bg-slate-900/60"
+            className="h-12 rounded-xl border-slate-200 bg-slate-50 pl-10"
             required
           />
         </div>
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           {error}
         </div>
       )}

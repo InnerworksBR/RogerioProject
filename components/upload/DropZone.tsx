@@ -220,6 +220,14 @@ export function DropZone() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected: (rejections) => {
+      for (const { file, errors } of rejections) {
+        const message = errors.some((error) => error.code === 'file-too-large')
+          ? 'O arquivo excede 25 MB. Divida a planilha e tente novamente.'
+          : 'Escolha uma planilha no formato .xls ou .xlsx.';
+        toast.error(`${file.name}: ${message}`);
+      }
+    },
     accept: {
       'application/vnd.ms-excel': ['.xls'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
@@ -238,29 +246,31 @@ export function DropZone() {
         {/* Dropzone */}
         <div
           {...getRootProps()}
-          className={`cursor-pointer rounded-xl border-2 border-dashed p-16 text-center transition-all ${
+          aria-label="Selecionar planilhas de vendas para importar"
+          className={`cursor-pointer rounded-xl border-2 border-dashed px-4 py-10 text-center transition-colors sm:p-12 ${
             isDragActive
-              ? 'border-indigo-500 bg-indigo-950/20'
-              : 'border-slate-700 hover:border-indigo-400 hover:bg-slate-800/50'
-          } ${isProcessing ? 'pointer-events-none opacity-60' : ''}`}
+              ? 'border-indigo-500 bg-indigo-50'
+              : 'border-slate-300 bg-slate-50/60 hover:border-indigo-400 hover:bg-indigo-50/40'
+          } ${isProcessing ? 'pointer-events-none opacity-60' : ''} `}
         >
           <input {...getInputProps()} />
           <div className="space-y-3">
             <div className="flex justify-center">
               <UploadCloud
-                className={`w-10 h-10 ${isDragActive ? 'text-indigo-400' : 'text-slate-500'}`}
+                className={`w-10 h-10 ${isDragActive ? 'text-indigo-700' : 'text-slate-600'}`}
               />
             </div>
-            <p className="text-lg font-semibold text-slate-200">
-              {isDragActive ? 'Solte os arquivos aqui' : 'Arraste um ou mais arquivos .xls ou .xlsx'}
+            <p className="text-lg font-semibold text-slate-900">
+              {isDragActive ? 'Solte os arquivos aqui' : 'Selecione ou arraste suas planilhas'}
             </p>
-            <p className="text-sm text-slate-400">ou clique para selecionar arquivos de até 25 MB</p>
+            <p className="text-sm text-slate-600">Formatos .xls e .xlsx · até 25 MB por arquivo</p>
+            <span className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-primary px-5 text-sm font-medium text-white">Selecionar arquivos</span>
           </div>
         </div>
 
         {/* Indicador de fila durante processamento */}
         {queuedFiles.length > 0 && !queueComplete && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600">
             Fila: {completedFiles}/{queuedFiles.length} arquivo{queuedFiles.length !== 1 ? 's' : ''} concluído{completedFiles !== 1 ? 's' : ''}.
           </p>
         )}
@@ -281,16 +291,16 @@ export function DropZone() {
 
         {/* Card-resumo consolidado — exibido ao concluir toda a fila com sucesso */}
         {queueComplete && (
-          <div className="glass rounded-2xl border border-white/10 p-6 space-y-4">
+          <div className="glass rounded-2xl border border-slate-200 p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15">
-                <CircleCheck className="w-5 h-5 text-emerald-400" />
+                <CircleCheck className="w-5 h-5 text-emerald-700" />
               </div>
               <div>
-                <p className="text-base font-bold text-slate-100">
+                <p className="text-base font-bold text-slate-700">
                   Fila concluída: {summary.files} de {queuedFiles.length} arquivo{queuedFiles.length !== 1 ? 's' : ''} importado{summary.files !== 1 ? 's' : ''}
                 </p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-slate-600">
                   <span className="inline-flex items-center gap-1.5">
                     <Files className="w-3.5 h-3.5" />
                     {formatPeriod(summary.periodStart)}
@@ -306,7 +316,7 @@ export function DropZone() {
 
             <ul className="space-y-2" aria-label="Resultado dos arquivos">
               {fileResults.map((result) => (
-                <li key={`${result.filename}-${result.status}`} className={`rounded-xl border px-3 py-2 text-sm ${result.status === 'success' ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-200' : 'border-rose-500/20 bg-rose-500/5 text-rose-200'}`}>
+                <li key={`${result.filename}-${result.status}`} className={`rounded-xl border px-3 py-2 text-sm ${result.status === 'success' ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-700' : 'border-rose-500/20 bg-rose-500/5 text-rose-700'} `}>
                   <span className="font-semibold">{result.filename}</span> — {result.status === 'success'
                     ? `${result.rows.toLocaleString('pt-BR')} linhas importadas${result.skipped > 0 ? `; ${result.skipped.toLocaleString('pt-BR')} ignoradas` : ''}`
                     : result.message}

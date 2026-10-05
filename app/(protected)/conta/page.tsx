@@ -22,13 +22,13 @@ export default async function ContaPage() {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
       <div className="space-y-1">
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-indigo-500">
+        <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
           Conta
         </p>
-        <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-950">
           Segurança da conta
         </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-slate-600">
           Sessão de <span className="font-semibold">{user.email}</span>
         </p>
       </div>

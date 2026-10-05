@@ -83,14 +83,14 @@ function getProductTrendLabel(trend: ClientProductSummary['trend']) {
 
 function getProductTrendClasses(trend: ClientProductSummary['trend']) {
   if (trend === 'new' || trend === 'up') {
-    return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+    return 'bg-emerald-500/10 text-emerald-700';
   }
 
   if (trend === 'down') {
-    return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+    return 'bg-amber-500/10 text-amber-700';
   }
 
-  return 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400';
+  return 'bg-slate-100 text-slate-600';
 }
 
 function getOpportunityLabel(reason: ClientOpportunity['reason']) {
@@ -116,9 +116,9 @@ export function MetricCard({
   icon: ComponentType<{ className?: string }>;
 }) {
   const toneClasses = {
-    positive: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    warning: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    neutral: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
+    positive: 'bg-emerald-500/10 text-emerald-700',
+    warning: 'bg-amber-500/10 text-amber-700',
+    neutral: 'bg-slate-500/10 text-slate-600',
   };
 
   return (
@@ -128,20 +128,20 @@ export function MetricCard({
           <Icon className="h-5 w-5" />
         </div>
         {delta && (
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
             {delta}
           </span>
         )}
       </div>
       <div className="mt-4 min-w-0">
-        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+        <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
           {title}
         </p>
-        <p className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+        <p className="mt-2 text-2xl font-bold tracking-tight text-slate-950">
           {value}
         </p>
         {subtitle && (
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+          <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
         )}
       </div>
     </div>
@@ -151,16 +151,16 @@ export function MetricCard({
 export function InsightItem({ insight }: { insight: ClientVisitInsight }) {
   const tones = {
     positive:
-      'border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/20 dark:text-emerald-300',
+      'border-emerald-200 bg-emerald-50/80 text-emerald-700',
     warning:
-      'border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-300',
+      'border-amber-200 bg-amber-50/80 text-amber-700',
     neutral:
-      'border-slate-200 bg-slate-50/80 text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300',
+      'border-slate-200 bg-slate-50/80 text-slate-700',
   };
 
   return (
     <div className={cn('rounded-2xl border p-4', tones[insight.tone])}>
-      <p className="text-xs font-bold uppercase tracking-[0.18em]">{insight.title}</p>
+      <p className="text-xs font-bold uppercase tracking-wide">{insight.title}</p>
       <p className="mt-2 text-sm leading-relaxed">{insight.description}</p>
     </div>
   );
@@ -178,16 +178,16 @@ export function QuickFactCard({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
             {title}
           </p>
-          <p className="mt-2 text-lg font-bold text-slate-950 dark:text-white">{value}</p>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+          <p className="mt-2 text-lg font-bold text-slate-950">{value}</p>
+          <p className="mt-1 text-sm text-slate-600">{description}</p>
         </div>
-        <div className="rounded-2xl bg-slate-100 p-3 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+        <div className="rounded-2xl bg-slate-100 p-3 text-slate-600">
           <Icon className="h-4 w-4" />
         </div>
       </div>
@@ -205,23 +205,23 @@ export function MonthlyComparisonChart({
   const maxValue = Math.max(1, ...data.flatMap((item) => [item.revenue, item.previousRevenue]));
 
   return (
-    <div className="glass-card rounded-[1.75rem] p-5 sm:p-6">
+    <div className="glass-card rounded-2xl p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-bold text-slate-950 dark:text-white">
+          <h3 className="text-lg font-bold text-slate-950">
             Evolução mensal do cliente
           </h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-600">
             Comparação direta entre {selectedYear} e {selectedYear - 1} por faturamento.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
+        <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-600">
           <span className="inline-flex items-center gap-2">
             <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
             {selectedYear}
           </span>
           <span className="inline-flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-700" />
+            <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
             {selectedYear - 1}
           </span>
         </div>
@@ -237,7 +237,7 @@ export function MonthlyComparisonChart({
               <div key={point.month} className="flex h-64 flex-col justify-end gap-2">
                 <div className="flex h-full items-end justify-center gap-1.5 sm:gap-2">
                   <div
-                    className="w-3 rounded-t-full bg-slate-300 sm:w-4 dark:bg-slate-700"
+                    className="w-3 rounded-t-full bg-slate-300 sm:w-4"
                     style={{ height: previousHeight }}
                     aria-label={`${point.label} ${selectedYear - 1}: ${fmtBRL(point.previousRevenue)}`}
                   />
@@ -248,10 +248,10 @@ export function MonthlyComparisonChart({
                   />
                 </div>
                 <div className="space-y-1 text-center">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                     {point.label}
                   </p>
-                  <p className="hidden text-[10px] text-slate-500 dark:text-slate-400 sm:block">
+                  <p className="hidden text-xs text-slate-600 sm:block">
                     {fmtBRL(point.revenue)}
                   </p>
                 </div>
@@ -272,9 +272,9 @@ export function YearHistoryPanel({
   selectedYear: number;
 }) {
   return (
-    <div className="glass-card rounded-[1.75rem] p-5 sm:p-6">
-      <h3 className="text-lg font-bold text-slate-950 dark:text-white">Histórico anual</h3>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+    <div className="glass-card rounded-2xl p-5 sm:p-6">
+      <h3 className="text-lg font-bold text-slate-950">Histórico anual</h3>
+      <p className="mt-1 text-sm text-slate-600">
         Leitura rápida da evolução do relacionamento ao longo dos anos.
       </p>
 
@@ -285,39 +285,39 @@ export function YearHistoryPanel({
             className={cn(
               'rounded-2xl border p-4 transition-colors',
               item.year === selectedYear
-                ? 'border-indigo-300 bg-indigo-50/70 dark:border-indigo-800 dark:bg-indigo-950/20'
-                : 'border-slate-200 bg-white/70 dark:border-slate-800 dark:bg-slate-950/40'
+                ? 'border-indigo-300 bg-indigo-50/70'
+                : 'border-slate-200 bg-slate-50'
             )}
           >
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-bold text-slate-950 dark:text-white">{item.year}</p>
-              <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <p className="text-sm font-bold text-slate-950">{item.year}</p>
+              <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
                 {item.orders} pedidos
               </span>
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
               <div>
-                <p className="text-slate-400 dark:text-slate-500">Faturamento</p>
-                <p className="font-semibold text-slate-900 dark:text-white">
+                <p className="text-slate-600">Faturamento</p>
+                <p className="font-semibold text-slate-900">
                   {fmtBRL(item.revenue)}
                 </p>
               </div>
               <div>
-                <p className="text-slate-400 dark:text-slate-500">Produtos</p>
-                <p className="font-semibold text-slate-900 dark:text-white">
+                <p className="text-slate-600">Produtos</p>
+                <p className="font-semibold text-slate-900">
                   {fmtNumber(item.products)}
                 </p>
               </div>
               <div>
-                <p className="text-slate-400 dark:text-slate-500">Unidades</p>
-                <p className="font-semibold text-slate-900 dark:text-white">
+                <p className="text-slate-600">Unidades</p>
+                <p className="font-semibold text-slate-900">
                   {fmtNumber(item.units)}
                 </p>
               </div>
               <div>
-                <p className="text-slate-400 dark:text-slate-500">Pedidos</p>
-                <p className="font-semibold text-slate-900 dark:text-white">
+                <p className="text-slate-600">Pedidos</p>
+                <p className="font-semibold text-slate-900">
                   {fmtNumber(item.orders)}
                 </p>
               </div>
@@ -339,13 +339,13 @@ export function TopProductsList({
   description?: string;
 }) {
   return (
-    <div className="glass-card rounded-[1.75rem] p-5 sm:p-6">
+    <div className="glass-card rounded-2xl p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-slate-950 dark:text-white">{title}</h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+          <h3 className="text-lg font-bold text-slate-950">{title}</h3>
+          <p className="mt-1 text-sm text-slate-600">{description}</p>
         </div>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
           Top {products.length}
         </span>
       </div>
@@ -354,20 +354,20 @@ export function TopProductsList({
         {products.map((product, index) => (
           <div
             key={product.cod_referencia}
-            className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40"
+            className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                   #{index + 1} · {product.cod_referencia}
                 </p>
-                <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900 dark:text-white">
+                <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900">
                   {product.descr_produto}
                 </p>
               </div>
               <span
                 className={cn(
-                  'rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em]',
+                  'rounded-full px-2 py-1 text-xs font-bold uppercase tracking-wide',
                   getProductTrendClasses(product.trend)
                 )}
               >
@@ -377,26 +377,26 @@ export function TopProductsList({
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-slate-600">
                   Receita
                 </p>
-                <p className="font-semibold text-slate-950 dark:text-white">
+                <p className="font-semibold text-slate-950">
                   {fmtBRL(product.revenue)}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-slate-600">
                   Unidades
                 </p>
-                <p className="font-semibold text-slate-950 dark:text-white">
+                <p className="font-semibold text-slate-950">
                   {fmtNumber(product.units)}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-slate-600">
                   Participação
                 </p>
-                <p className="font-semibold text-slate-950 dark:text-white">
+                <p className="font-semibold text-slate-950">
                   {(product.shareOfRevenue * 100).toFixed(1)}%
                 </p>
               </div>
@@ -535,11 +535,11 @@ export function ProductExplorer({
   const chronologyRevenue = chronology.reduce((sum, point) => sum + point.revenue, 0);
 
   return (
-    <div className="glass-card rounded-[1.75rem] p-5 sm:p-6">
+    <div className="glass-card rounded-2xl p-5 sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h3 className="text-lg font-bold text-slate-950 dark:text-white">{title}</h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+          <h3 className="text-lg font-bold text-slate-950">{title}</h3>
+          <p className="mt-1 text-sm text-slate-600">{description}</p>
         </div>
 
         <div className="w-full lg:w-80">
@@ -548,9 +548,9 @@ export function ProductExplorer({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Filtrar por código ou descrição..."
-            className="h-10 border-slate-200 bg-white/80 dark:border-slate-800 dark:bg-slate-900/60"
+            className="h-10 border-slate-200 bg-slate-50"
           />
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-xs text-slate-600">
             {fmtNumber(filteredProducts.length)} produtos nesta visão
           </p>
         </div>
@@ -567,32 +567,32 @@ export function ProductExplorer({
               className={cn(
                 'w-full rounded-2xl border p-4 text-left transition-all',
                 selectedProduct?.cod_referencia === product.cod_referencia
-                  ? 'border-indigo-300 bg-indigo-50/70 shadow-lg shadow-indigo-500/10 dark:border-indigo-800 dark:bg-indigo-950/20'
-                  : 'border-slate-200 bg-white/70 hover:border-indigo-300 hover:bg-white dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-slate-700'
+                  ? 'border-indigo-300 bg-indigo-50/70 shadow-lg shadow-indigo-500/10'
+                  : 'border-slate-200 bg-slate-50 hover:border-indigo-300 hover:bg-white'
               )}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                     {product.cod_referencia}
                   </p>
-                  <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900 dark:text-white">
+                  <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-900">
                     {product.descr_produto}
                   </p>
                 </div>
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-bold text-slate-600">
                   {fmtNumber(product.units)}
                 </span>
               </div>
 
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-cyan-400"
                   style={{ width: `${Math.min(100, Math.max(5, (product.units / maxUnits) * 100))}%` }}
                 />
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
                 <span>{fmtBRL(product.revenue)}</span>
                 <span>{product.orderCount} pedidos</span>
               </div>
@@ -600,31 +600,31 @@ export function ProductExplorer({
           ))}
 
           {filteredProducts.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/30 dark:text-slate-400">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
               Nenhum produto encontrado com esse filtro.
             </div>
           )}
         </div>
 
-        <div className="rounded-[1.5rem] border border-slate-200 bg-white/70 p-5 dark:border-slate-800 dark:bg-slate-950/40">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
           {selectedProduct ? (
             <>
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                       Produto selecionado
                     </p>
-                    <h4 className="mt-1 text-xl font-black tracking-tight text-slate-950 dark:text-white">
+                    <h4 className="mt-1 text-xl font-bold tracking-tight text-slate-950">
                       {selectedProduct.cod_referencia}
                     </h4>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-sm text-slate-600">
                       {selectedProduct.descr_produto}
                     </p>
                   </div>
                   <span
                     className={cn(
-                      'rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em]',
+                      'rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide',
                       getProductTrendClasses(selectedProduct.trend)
                     )}
                   >
@@ -633,27 +633,27 @@ export function ProductExplorer({
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/70">
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-wide text-slate-600">
                       Histórico completo
                     </p>
-                    <p className="mt-1 font-semibold text-slate-950 dark:text-white">
+                    <p className="mt-1 font-semibold text-slate-950">
                       {fmtNumber(chronologyUnits)} unidades
                     </p>
                   </div>
-                  <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/70">
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-wide text-slate-600">
                       Receita acumulada
                     </p>
-                    <p className="mt-1 font-semibold text-slate-950 dark:text-white">
+                    <p className="mt-1 font-semibold text-slate-950">
                       {fmtBRL(chronologyRevenue)}
                     </p>
                   </div>
-                  <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/70">
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs uppercase tracking-wide text-slate-600">
                       Última compra
                     </p>
-                    <p className="mt-1 font-semibold text-slate-950 dark:text-white">
+                    <p className="mt-1 font-semibold text-slate-950">
                       {fmtDate(selectedProduct.lastPurchaseDate)}
                     </p>
                   </div>
@@ -675,13 +675,13 @@ export function ProductExplorer({
                           />
                         </div>
                         <div className="mt-3 text-center">
-                          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                          <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                             {point.label}
                           </p>
-                          <p className="mt-1 text-xs font-semibold text-slate-900 dark:text-white">
+                          <p className="mt-1 text-xs font-semibold text-slate-900">
                             {fmtNumber(point.units)}
                           </p>
-                          <p className="hidden text-[10px] text-slate-500 dark:text-slate-400 sm:block">
+                          <p className="hidden text-xs text-slate-600 sm:block">
                             {fmtBRL(point.revenue)}
                           </p>
                         </div>
@@ -690,40 +690,40 @@ export function ProductExplorer({
                   </div>
                 </div>
               ) : (
-                <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/60 p-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/30 dark:text-slate-400">
+                <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
                   Ainda não há cronologia suficiente para este produto.
                 </div>
               )}
 
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/70">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-600">
                     Ano selecionado
                   </p>
-                  <p className="mt-1 font-semibold text-slate-950 dark:text-white">
+                  <p className="mt-1 font-semibold text-slate-950">
                     {fmtNumber(selectedProduct.units)} unidades
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/70">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-600">
                     Ano anterior
                   </p>
-                  <p className="mt-1 font-semibold text-slate-950 dark:text-white">
+                  <p className="mt-1 font-semibold text-slate-950">
                     {fmtNumber(selectedProduct.previousUnits)} unidades
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-900/70">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-600">
                     Participação
                   </p>
-                  <p className="mt-1 font-semibold text-slate-950 dark:text-white">
+                  <p className="mt-1 font-semibold text-slate-950">
                     {(selectedProduct.shareOfRevenue * 100).toFixed(1)}% da receita
                   </p>
                 </div>
               </div>
             </>
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/30 dark:text-slate-400">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
               Selecione um produto para ver a cronologia mensal.
             </div>
           )}
@@ -743,13 +743,13 @@ export function OpportunityList({
   items: ClientOpportunity[];
 }) {
   return (
-    <div className="glass-card rounded-[1.75rem] p-5 sm:p-6">
-      <h3 className="text-lg font-bold text-slate-950 dark:text-white">{title}</h3>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+    <div className="glass-card rounded-2xl p-5 sm:p-6">
+      <h3 className="text-lg font-bold text-slate-950">{title}</h3>
+      <p className="mt-1 text-sm text-slate-600">{description}</p>
 
       <div className="mt-5 space-y-3">
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/30 dark:text-slate-400">
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
             Nenhum item relevante apareceu nesta leitura comparativa.
           </div>
         ) : (
@@ -759,23 +759,23 @@ export function OpportunityList({
             return (
               <div
                 key={`${item.reason}-${item.cod_referencia}`}
-                className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40"
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                       {item.cod_referencia}
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
                       {item.descr_produto}
                     </p>
                   </div>
                   <span
                     className={cn(
-                      'rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em]',
+                      'rounded-full px-2 py-1 text-xs font-bold uppercase tracking-wide',
                       isPositive
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        ? 'bg-emerald-500/10 text-emerald-700'
+                        : 'bg-amber-500/10 text-amber-700'
                     )}
                   >
                     {getOpportunityLabel(item.reason)}
@@ -784,20 +784,20 @@ export function OpportunityList({
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    <p className="text-xs uppercase tracking-wide text-slate-600">
                       Receita
                     </p>
-                    <p className="font-semibold text-slate-950 dark:text-white">
-                      {fmtBRL(item.currentRevenue)} <span className="text-slate-400">vs</span>{' '}
+                    <p className="font-semibold text-slate-950">
+                      {fmtBRL(item.currentRevenue)} <span className="text-slate-600">vs</span>{' '}
                       {fmtBRL(item.previousRevenue)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    <p className="text-xs uppercase tracking-wide text-slate-600">
                       Unidades
                     </p>
-                    <p className="font-semibold text-slate-950 dark:text-white">
-                      {fmtNumber(item.currentUnits)} <span className="text-slate-400">vs</span>{' '}
+                    <p className="font-semibold text-slate-950">
+                      {fmtNumber(item.currentUnits)} <span className="text-slate-600">vs</span>{' '}
                       {fmtNumber(item.previousUnits)}
                     </p>
                   </div>
@@ -823,42 +823,42 @@ export function RecentOrdersList({
   const visibleOrders = limit ? orders.slice(0, limit) : orders;
 
   return (
-    <div className="glass-card rounded-[1.75rem] p-5 sm:p-6">
-      <h3 className="text-lg font-bold text-slate-950 dark:text-white">Últimos pedidos</h3>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+    <div className="glass-card rounded-2xl p-5 sm:p-6">
+      <h3 className="text-lg font-bold text-slate-950">Últimos pedidos</h3>
+      <p className="mt-1 text-sm text-slate-600">
         Compras recentes para entrar na reunião já contextualizado.
       </p>
 
       <div className="mt-5 space-y-3">
         {visibleOrders.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/30 dark:text-slate-400">
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
             Ainda não há pedidos disponíveis para este cliente.
           </div>
         ) : (
           visibleOrders.map((order) => (
             <div
               key={order.orderKey}
-              className="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40"
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-600">
                     Pedido {order.orderCode}
                   </p>
-                  <p className="mt-1 font-semibold text-slate-900 dark:text-white">
+                  <p className="mt-1 font-semibold text-slate-900">
                     {fmtDate(order.orderDate)}
                   </p>
                 </div>
                 <div className="text-left sm:text-right">
-                  <p className="font-semibold text-slate-950 dark:text-white">
+                  <p className="font-semibold text-slate-950">
                     {fmtBRL(order.revenue)}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-600">
                     {fmtNumber(order.units)} unidades
                   </p>
                 </div>
               </div>
-              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-3 text-sm text-slate-600">
                 {order.lineCount} itens. Destaques: {order.highlights.join(', ')}
               </p>
             </div>
@@ -909,7 +909,7 @@ function ShareDashboardButton({ clientId, year }: { clientId: string; year: numb
       onClick={handleShare}
       disabled={loading}
       variant="outline"
-      className="rounded-full px-4 border-indigo-200 hover:bg-indigo-50 text-indigo-700 dark:border-indigo-900/50 dark:hover:bg-indigo-900/30 dark:text-indigo-300"
+      className="rounded-full px-4 border-indigo-200 hover:bg-indigo-50 text-indigo-700"
     >
       {loading ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1074,43 +1074,45 @@ export function ClientVisitDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/5">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white lg:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 lg:text-4xl">
             {dashboardMode === 'cliente'
               ? 'Apresentação ao Cliente'
-              : 'Painel Técnico do Consultor'}
+              : 'Análise do cliente'}
           </h1>
-          <p className="text-slate-400 mt-2 max-w-xl">
-            Pesquise um cliente para formatar os dados de faturamento e projetar o foco da próxima visita.
+          <p className="text-slate-600 mt-2 max-w-xl">
+            Escolha um cliente para acompanhar as compras e preparar sua próxima visita.
           </p>
         </div>
 
-        <div className="flex items-center bg-[#030712]/50 p-1.5 rounded-2xl border border-white/10 shadow-lg">
+        <div role="group" aria-label="Modo de visualização do cliente" className="grid grid-cols-2 gap-1 rounded-xl border border-border bg-white p-1">
           <Button
             variant="ghost"
             className={cn(
-              'rounded-xl px-6 h-11 transition-all',
-              dashboardMode === 'cliente' ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-400 hover:text-white'
+              'rounded-lg px-3 h-11 text-xs sm:text-sm transition-colors',
+              dashboardMode === 'cliente' ? 'bg-indigo-500/20 text-indigo-700 font-bold' : 'text-slate-600 hover:text-slate-900'
             )}
+            aria-pressed={dashboardMode === 'cliente'}
             onClick={() => setDashboardMode('cliente')}
           >
-            Modo Pitch Deck
+            Apresentar ao cliente
           </Button>
           <Button
             variant="ghost"
             className={cn(
-              'rounded-xl px-6 h-11 transition-all',
-              dashboardMode === 'consultor' ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-400 hover:text-white'
+              'rounded-lg px-3 h-11 text-xs sm:text-sm transition-colors',
+              dashboardMode === 'consultor' ? 'bg-indigo-500/20 text-indigo-700 font-bold' : 'text-slate-600 hover:text-slate-900'
             )}
+            aria-pressed={dashboardMode === 'consultor'}
             onClick={() => setDashboardMode('consultor')}
           >
-            Visão Interna
+            Análise comercial
           </Button>
         </div>
       </header>
 
-      <div className="glass-card rounded-[2rem] p-4 flex flex-col xl:flex-row gap-4 items-center z-50 relative">
+      <div className="glass-card rounded-2xl p-4 flex flex-col xl:flex-row gap-4 items-center z-50 relative">
         <div className="flex-1 w-full">
           <Combobox
             aria-label="Buscar cliente por código ou nome"
@@ -1118,7 +1120,7 @@ export function ClientVisitDashboard() {
             items={clients.map((client): ComboboxItem => ({
               value: client.cod_cliente,
               label: client.nome_cliente,
-              sublabel: client.cod_cliente,
+              sublabel: client.cod_cliente.startsWith('group:') ? 'Consolidado' : client.cod_cliente,
             }))}
             value={selectedClient ?? null}
             onInputChange={setClientQuery}
@@ -1131,21 +1133,22 @@ export function ClientVisitDashboard() {
               startTransition(() => setClient(cod, client?.nome_cliente ?? null));
             }}
             emptyMessage={clientsLoading ? 'Buscando...' : 'Nenhum cliente encontrado.'}
-            inputGroupClassName="bg-[#030712]/50 border-white/10"
-            inputClassName="h-14 text-lg text-white placeholder:text-slate-500 focus-visible:ring-indigo-500/50"
+            inputGroupClassName="bg-white border-slate-200"
+            inputClassName="h-14 text-lg text-slate-900 placeholder:text-slate-600 focus-visible:ring-indigo-500/50"
           />
         </div>
 
         {availableYears.length > 0 && (
-          <div className="flex bg-[#030712]/50 border border-white/10 p-1.5 rounded-xl w-full xl:w-auto overflow-x-auto custom-scrollbar">
+          <div className="flex bg-white border border-slate-200 p-1.5 rounded-xl w-full xl:w-auto overflow-x-auto custom-scrollbar">
             {availableYears.slice().sort((a, b) => b - a).map((year) => (
               <Button
                 key={year}
                 variant="ghost"
                 className={cn(
                   'rounded-lg px-6 h-11 shrink-0',
-                  selectedYear === year ? 'bg-indigo-500/20 text-indigo-300 font-bold' : 'text-slate-400 hover:text-white'
+                  selectedYear === year ? 'bg-indigo-500/20 text-indigo-700 font-bold' : 'text-slate-600 hover:text-slate-900'
                 )}
+                aria-pressed={selectedYear === year}
                 onClick={() => setYear(year)}
               >
                 {year}
@@ -1163,21 +1166,21 @@ export function ClientVisitDashboard() {
       </div>
 
       {(clientsError || yearsError || dashboardError) && (
-        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">
           {clientsError ?? yearsError ?? dashboardError}
         </div>
       )}
 
       {!selectedClient && !loadingYears && (
-        <div className="glass-card rounded-[2.5rem] p-16 text-center border-dashed border-2 border-white/10 mt-12 max-w-2xl mx-auto">
-          <div className="w-24 h-24 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner shadow-indigo-500/20">
-            <Sparkles className="h-10 w-10 text-indigo-400" />
+        <div className="glass-card rounded-2xl px-5 py-10 text-center border-dashed border-2 border-slate-200 max-w-2xl mx-auto sm:p-10">
+          <div className="w-24 h-24 bg-indigo-500/10 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner shadow-indigo-500/20">
+            <Sparkles className="h-10 w-10 text-indigo-700" />
           </div>
-          <h2 className="text-3xl font-black tracking-tight text-white mb-4">
-            Aguardando seleção de cliente
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 mb-4">
+            Qual cliente você vai visitar?
           </h2>
-          <p className="text-lg text-slate-400 leading-relaxed">
-            Busque o cliente no campo acima para gerar o dashboard comercial instantâneo com o histórico de compras e análise de tendências.
+          <p className="text-lg text-slate-600 leading-relaxed">
+            Pesquise pelo nome ou código no campo acima. Você poderá consultar o histórico de compras, comparar resultados e preparar uma apresentação.
           </p>
         </div>
       )}
@@ -1194,7 +1197,7 @@ export function ClientVisitDashboard() {
         <>
           {dashboardMode === 'cliente' ? (
             <>
-              <div className="relative -mx-4 sm:-mx-6 lg:-mx-8 rounded-[3rem] overflow-hidden mt-8 shadow-2xl border border-white/5 ring-1 ring-white/10">
+              <div className="relative rounded-2xl overflow-hidden mt-6 border border-border">
                 <SharedDashboardClientView
                   dashboardData={dashboardData}
                   clientName={selectedClientName || selectedClientRecord?.nome_cliente || ''}
@@ -1276,7 +1279,7 @@ export function ClientVisitDashboard() {
             className="space-y-5"
           >
             <div className="overflow-x-auto pb-1">
-              <TabsList className="min-w-max bg-white/75 p-1 dark:bg-slate-950/50">
+              <TabsList className="min-w-max bg-slate-50 p-1">
                 <TabsTrigger value="resumo" className="px-4">
                   Resumo
                 </TabsTrigger>
@@ -1358,12 +1361,12 @@ export function ClientVisitDashboard() {
       )}
 
       {selectedClient && !loadingDashboard && !loadingYears && dashboardData === null && !dashboardError && (
-        <div className="glass-card rounded-[2rem] p-8 text-center">
-          <AlertTriangle className="mx-auto h-10 w-10 text-amber-500" />
-          <h2 className="mt-4 text-2xl font-bold text-slate-950 dark:text-white">
+        <div className="glass-card rounded-2xl p-8 text-center">
+          <AlertTriangle className="mx-auto h-10 w-10 text-amber-700" />
+          <h2 className="mt-4 text-2xl font-bold text-slate-950">
             Sem histórico para este cliente
           </h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-sm text-slate-600">
             O cliente foi selecionado, mas ainda não há linhas importadas suficientes para
             montar o dashboard.
           </p>

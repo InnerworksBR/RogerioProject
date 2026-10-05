@@ -5,40 +5,37 @@ import { UploadCloud, CheckCircle2 } from 'lucide-react';
 
 export default function UploadPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-8 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
       <div className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-500">
+        <p className="text-xs font-bold uppercase tracking-wide text-indigo-700">
           Importação de dados
         </p>
-        <h1 className="text-4xl font-black tracking-tight text-white">
-          Upload de planilhas
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+          Importar planilhas
         </h1>
-        <p className="text-lg text-slate-400">
-          Arraste o relatório exportado do Plastiron para importar os dados de vendas.
+        <p className="text-base text-slate-600">
+          Envie os arquivos exportados do ERP para atualizar seus indicadores e relatórios.
         </p>
       </div>
 
-      <div className="glass-card rounded-[2.5rem] border border-white/5 p-2 shadow-2xl relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-        <div className="relative z-10 bg-[#030712]/50 rounded-[2rem] p-8 sm:p-12 border border-white/5">
-          <DropZone />
-        </div>
+      <div className="glass-card rounded-2xl p-4 sm:p-6">
+        <DropZone />
       </div>
 
       <div className="glass p-6 rounded-3xl space-y-4">
-        <div className="flex items-center text-indigo-300">
+        <div className="flex items-center text-indigo-700">
           <UploadCloud className="w-5 h-5 mr-3" />
-          <h3 className="font-bold text-lg">Como funciona</h3>
+          <h2 className="font-semibold text-lg">Antes de importar</h2>
         </div>
         <ul className="grid sm:grid-cols-2 gap-4">
           {[
-            'O arquivo deve ser exportado direto do Plastiron (.xls ou .xlsx).',
-            'Somente linhas com situação LIQ são processadas para análise.',
-            'Arquivos com até 100 mil linhas são processados em poucos segundos.',
-            'Você pode enviar planilhas de meses ou anos diferentes para compor o histórico.'
+            'Use o relatório de vendas do ERP nos formatos .xls ou .xlsx.',
+            'Somente vendas liquidadas (situação LIQ) entram na análise.',
+            'Você pode selecionar vários arquivos de até 25 MB cada.',
+            'Ao concluir, clique em Ver relatórios para analisar o histórico.'
           ].map((inst, i) => (
-            <li key={i} className="flex items-start text-sm text-slate-400">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 mr-2 shrink-0 mt-0.5" />
+            <li key={i} className="flex items-start text-sm text-slate-600">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 mr-2 shrink-0 mt-0.5" />
               {inst}
             </li>
           ))}

@@ -64,8 +64,8 @@ export function ExecutiveSummaryCard() {
 
   if (loading) {
     return (
-      <div className="glass-card rounded-[2rem] p-6">
-        <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+      <div className="glass-card rounded-2xl p-6">
+        <div className="flex items-center gap-3 text-slate-600">
           <Loader2 className="size-4 animate-spin" />
           Gerando resumo executivo com IA...
         </div>
@@ -75,7 +75,7 @@ export function ExecutiveSummaryCard() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-between gap-4 rounded-[2rem] border border-rose-200 bg-rose-50 px-6 py-5 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">
+      <div className="flex items-center justify-between gap-4 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-5 text-sm text-rose-700">
         <span>Não foi possível gerar o resumo executivo: {error}</span>
         <Button type="button" variant="outline" onClick={generateSummary}>Tentar novamente</Button>
       </div>
@@ -84,12 +84,12 @@ export function ExecutiveSummaryCard() {
 
   if (!data) {
     return (
-      <div className="glass-card flex flex-col gap-4 rounded-[2rem] p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="glass-card flex flex-col gap-4 rounded-2xl p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 font-bold text-slate-950 dark:text-white">
-            <Sparkles className="size-4 text-indigo-500" /> Resumo executivo com IA
+          <div className="flex items-center gap-2 font-bold text-slate-950">
+            <Sparkles className="size-4 text-indigo-700" /> Resumo executivo com IA
           </div>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Gerado somente quando solicitado para evitar consultas e consumo desnecessários.</p>
+          <p className="mt-1 text-sm text-slate-600">Gerado somente quando solicitado para evitar consultas e consumo desnecessários.</p>
         </div>
         <Button type="button" onClick={generateSummary} disabled={!selectedYear} className="rounded-xl">
           <Sparkles className="mr-2 size-4" /> Gerar resumo executivo
@@ -101,7 +101,7 @@ export function ExecutiveSummaryCard() {
   if (!data?.available) {
     if (data?.reason === 'no_data') {
       return (
-        <div className="glass-card rounded-[2rem] p-6 text-sm text-slate-500 dark:text-slate-400">
+        <div className="glass-card rounded-2xl p-6 text-sm text-slate-600">
           Não há dados suficientes no filtro atual para gerar um resumo executivo.
         </div>
       );
@@ -117,20 +117,20 @@ export function ExecutiveSummaryCard() {
   }
 
   return (
-    <div className="glass-card rounded-[2rem] p-6 shadow-xl shadow-indigo-500/5">
+    <div className="glass-card rounded-2xl p-6 shadow-sm shadow-indigo-500/5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-indigo-600 dark:text-indigo-400">
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-indigo-600">
             <Sparkles className="size-3.5" />
             Resumo Executivo com IA
           </div>
           <div>
-            <h2 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950">
               {selectedClientName
                 ? `Leitura rápida de ${selectedClientName}`
                 : 'Leitura rápida do período selecionado'}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
               {summary.headline}
             </p>
           </div>
@@ -138,7 +138,7 @@ export function ExecutiveSummaryCard() {
 
         <div className="flex items-center gap-3">
           {data.generatedAt && (
-            <p className="hidden text-xs text-slate-400 dark:text-slate-500 sm:block">
+            <p className="hidden text-xs text-slate-600 sm:block">
               Atualizado em {new Date(data.generatedAt).toLocaleString('pt-BR')}
             </p>
           )}
@@ -167,19 +167,19 @@ export function ExecutiveSummaryCard() {
           <SummaryList
             title="Destaques"
             icon={TrendingUp}
-            accent="text-emerald-600 dark:text-emerald-400"
+            accent="text-emerald-700"
             items={summary.highlights}
           />
           <SummaryList
             title="Riscos"
             icon={AlertTriangle}
-            accent="text-rose-600 dark:text-rose-400"
+            accent="text-rose-600"
             items={summary.risks}
           />
           <SummaryList
             title="Próximas ações"
             icon={Target}
-            accent="text-indigo-600 dark:text-indigo-400"
+            accent="text-indigo-600"
             items={[...summary.opportunities, ...summary.recommended_actions].slice(0, 5)}
           />
         </div>
@@ -200,12 +200,12 @@ function SummaryList({
   items: string[];
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-slate-200/70 bg-white/70 p-5 dark:border-slate-800/70 dark:bg-slate-950/30">
-      <div className={`mb-4 flex items-center gap-2 text-sm font-bold ${accent}`}>
+    <div className="rounded-2xl border border-slate-200/70 bg-slate-50 p-5">
+      <div className={`mb-4 flex items-center gap-2 text-sm font-bold ${accent} `}>
         <Icon className="size-4" />
         {title}
       </div>
-      <ul className="space-y-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+      <ul className="space-y-3 text-sm leading-relaxed text-slate-600">
         {items.map((item) => (
           <li key={item} className="flex gap-2">
             <span className="mt-1.5 size-1.5 rounded-full bg-current opacity-70" />

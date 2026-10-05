@@ -56,24 +56,28 @@ export function ReportFilterBar({
   const products = productsQuery.data?.options ?? initialProducts;
 
   return (
-    <div className="glass rounded-2xl p-6 shadow-xl shadow-indigo-500/5 animate-in fade-in slide-in-from-top-4 duration-700">
-      <div className="flex flex-wrap gap-6 items-end">
+    <section aria-label="Filtros dos relatórios" className="glass rounded-2xl p-4 sm:p-5">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div><h2 className="font-semibold text-slate-900">Filtrar resultados</h2><p className="mt-1 text-sm text-slate-600">Os resultados se atualizam ao alterar os filtros. Compare até {MAX_COMPARISON_YEARS} anos.</p></div>
+        <Button variant="ghost" size="sm" disabled={!selectedClient && !selectedProduct && !selectedSemester && !selectedRevenueType} onClick={() => { clearFilters(); setClientQuery(''); setProductQuery(''); }}><X className="size-4" /> Limpar filtros</Button>
+      </div>
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
-          <label htmlFor="filter-semester" className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Semestre</label>
+          <label htmlFor="filter-semester" className="text-sm font-medium text-slate-700">Semestre</label>
           <Select value={selectedSemester?.toString() ?? 'all'} onValueChange={(value) => setSemester(value === 'all' ? null : Number(value) as 1 | 2)}>
-            <SelectTrigger id="filter-semester" aria-label="Semestre" className="w-36 rounded-xl h-11"><SelectValue /></SelectTrigger>
+            <SelectTrigger id="filter-semester" aria-label="Semestre" className="w-full rounded-lg h-11"><SelectValue>{selectedSemester === 1 ? '1º semestre · jan–jun' : selectedSemester === 2 ? '2º semestre · jul–dez' : 'Ano inteiro'}</SelectValue></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Ano inteiro</SelectItem>
-              <SelectItem value="1">1o semestre</SelectItem>
-              <SelectItem value="2">2o semestre</SelectItem>
+              <SelectItem value="1">1º semestre · jan–jun</SelectItem>
+              <SelectItem value="2">2º semestre · jul–dez</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="filter-revenue-type" className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Tipo de receita</label>
+          <label htmlFor="filter-revenue-type" className="text-sm font-medium text-slate-700">Tipo de receita</label>
           <Select value={selectedRevenueType ?? 'all'} onValueChange={(value) => setRevenueType(value === 'all' ? null : value)}>
-            <SelectTrigger id="filter-revenue-type" aria-label="Tipo de receita" className="w-48 rounded-xl h-11"><SelectValue placeholder="Todos" /></SelectTrigger>
+            <SelectTrigger id="filter-revenue-type" aria-label="Tipo de receita" className="w-full rounded-lg h-11"><SelectValue>{selectedRevenueType ?? 'Todas as receitas'}</SelectValue></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               {revenueTypes.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}
@@ -81,8 +85,8 @@ export function ReportFilterBar({
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <span id="filter-years-label" className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+        <div className="space-y-2 sm:col-span-2">
+          <span id="filter-years-label" className="flex items-center gap-2 text-sm font-medium text-slate-700">
             <CalendarIcon size={12} /> Anos para comparar
           </span>
           <div className="flex min-h-11 flex-wrap items-center gap-1.5" role="group" aria-labelledby="filter-years-label">
@@ -115,17 +119,18 @@ export function ReportFilterBar({
               );
             })}
           </div>
-          <p className="text-[10px] text-slate-400">Selecione de 1 a {MAX_COMPARISON_YEARS} anos.</p>
+          <p className="text-xs text-slate-600">Selecione de 1 a {MAX_COMPARISON_YEARS} anos.</p>
         </div>
 
-        <div className="space-y-2 flex-1 min-w-[280px]">
-          <label htmlFor="filter-client" className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
-            <UserIcon size={12} /> Cliente / Parceiro
+        <div className="min-w-0 space-y-2 lg:col-span-2">
+          <label htmlFor="filter-client" className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <UserIcon size={14} /> Cliente
           </label>
           <Combobox
-            aria-label="Cliente / Parceiro"
-            placeholder="Pesquisar cliente..."
-            items={clients}
+            id="filter-client"
+            aria-label="Cliente"
+            placeholder="Todos os clientes · pesquisar..."
+            items={clients.map((item) => item.value.startsWith('group:') ? { ...item, sublabel: 'Consolidado' } : item)}
             value={selectedClient}
             onInputChange={setClientQuery}
             onValueChange={(value) => {
@@ -133,48 +138,33 @@ export function ReportFilterBar({
               setClient(value || null, client?.label ?? null);
             }}
             emptyMessage={clientsQuery.isFetching ? 'Buscando clientes...' : 'Nenhum cliente encontrado.'}
-            inputGroupClassName="bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50"
+            inputGroupClassName="bg-white border-input"
             inputClassName="h-11 rounded-xl"
           />
         </div>
 
-        <div className="space-y-2 min-w-[220px]">
-          <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
-            <Filter size={12} /> Filtro de Produto
+        <div className="min-w-0 space-y-2 lg:col-span-2">
+          <label htmlFor="filter-product" className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <Filter size={14} /> Produto
           </label>
           <Combobox
-            aria-label="Filtro de Produto"
-            placeholder="Buscar por código ou descrição..."
+            id="filter-product"
+            aria-label="Produto"
+            placeholder="Todos os produtos · pesquisar código ou descrição..."
             items={products as ComboboxItem[]}
             value={selectedProduct ?? null}
             onInputChange={setProductQuery}
             onValueChange={(cod) => setProduct(cod || null)}
             emptyMessage={productsQuery.isFetching ? 'Buscando produtos...' : 'Nenhum produto encontrado.'}
-            inputGroupClassName="bg-white/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700/50"
+            inputGroupClassName="bg-white border-input"
             inputClassName="h-11 rounded-xl"
           />
         </div>
 
-        {(selectedClient || selectedProduct || selectedSemester || selectedRevenueType) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-11 px-4 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
-            onClick={() => {
-              clearFilters();
-            }}
-          >
-            <X size={16} className="mr-2" /> Limpar
-          </Button>
-        )}
       </div>
 
       {selectedClientName && (
-        <div className="mt-4 inline-flex items-center gap-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-4 py-2 rounded-full border border-indigo-500/20 animate-in fade-in zoom-in-95 duration-300">
-          <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Exibindo:</span>
-          <span className="text-sm font-bold">{selectedClientName}</span>
-        </div>
+        <Button variant="secondary" size="sm" className="mt-4 max-w-full" aria-label={`Remover filtro do cliente ${selectedClientName}`} onClick={() => setClient(null, null)}><span className="truncate">Cliente: {selectedClientName}</span><X className="size-4 shrink-0" /></Button>
       )}
 
       {(selectedSemester || selectedRevenueType || selectedProduct) && (
@@ -186,10 +176,10 @@ export function ReportFilterBar({
       )}
 
       {error && (
-        <p className="mt-4 text-xs font-medium text-amber-600 dark:text-amber-400">
+        <p className="mt-4 text-xs font-medium text-amber-700">
           Não foi possível carregar os filtros automaticamente: {error}
         </p>
       )}
-    </div>
+    </section>
   );
 }

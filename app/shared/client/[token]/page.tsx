@@ -12,8 +12,8 @@ export default async function SharedClientDashboardPage({
   if (!shared) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
-        <h1 className="text-2xl font-bold text-white">Acesso inválido ou expirado</h1>
-        <p className="mt-2 text-slate-500">Solicite um novo link ao seu representante.</p>
+        <h1 className="text-2xl font-bold text-slate-900">Acesso inválido ou expirado</h1>
+        <p className="mt-2 text-slate-600">Solicite um novo link ao seu representante.</p>
       </div>
     );
   }
@@ -21,8 +21,8 @@ export default async function SharedClientDashboardPage({
   if (shared.summary.orderCount === 0) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
-        <h1 className="text-2xl font-bold text-white">Sem dados</h1>
-        <p className="mt-2 text-slate-500">Não há dados suficientes para esta apresentação.</p>
+        <h1 className="text-2xl font-bold text-slate-900">Sem dados</h1>
+        <p className="mt-2 text-slate-600">Não há dados suficientes para esta apresentação.</p>
       </div>
     );
   }

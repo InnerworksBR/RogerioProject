@@ -146,23 +146,23 @@ export function ReportChat() {
     <>
     <ConfirmDialog />
     <div className="mx-auto grid min-h-[calc(100vh-9rem)] max-w-7xl gap-5 lg:grid-cols-[280px_1fr]">
-      <aside className="rounded-[2rem] border border-white/10 p-4 glass-card">
+      <aside className="rounded-2xl border border-slate-200 p-4 glass-card">
         <Button onClick={startNewConversation} className="w-full bg-indigo-600 text-white hover:bg-indigo-700">
           <MessageSquarePlus className="mr-2 h-4 w-4" />Nova conversa
         </Button>
-        <p className="mt-6 px-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Histórico</p>
+        <p className="mt-6 px-2 text-xs font-bold uppercase tracking-wide text-slate-600">Histórico</p>
         <div className="mt-3 space-y-2">
           {loadingHistory && conversations.length === 0 ? (
-            <p className="flex items-center gap-2 px-2 py-3 text-sm text-slate-400"><Loader2 className="h-4 w-4 animate-spin" />Carregando...</p>
+            <p className="flex items-center gap-2 px-2 py-3 text-sm text-slate-600"><Loader2 className="h-4 w-4 animate-spin" />Carregando...</p>
           ) : conversations.length === 0 ? (
-            <p className="px-2 py-3 text-sm text-slate-500">Nenhuma conversa salva.</p>
+            <p className="px-2 py-3 text-sm text-slate-600">Nenhuma conversa salva.</p>
           ) : conversations.map((conversation) => (
-            <div key={conversation.id} className={`group flex items-center gap-1 rounded-xl border ${activeConversationId === conversation.id ? 'border-indigo-500/40 bg-indigo-500/15' : 'border-transparent hover:bg-white/5'}`}>
+            <div key={conversation.id} className={`group flex items-center gap-1 rounded-xl border ${activeConversationId === conversation.id ? 'border-indigo-500/40 bg-indigo-500/15' : 'border-transparent hover:bg-slate-50'} `}>
               <button type="button" aria-pressed={activeConversationId === conversation.id} onClick={() => void openConversation(conversation.id)} className="min-w-0 flex-1 px-3 py-3 text-left">
-                <p className="truncate text-sm font-medium text-slate-200">{conversation.title}</p>
-                <p className="mt-1 text-[11px] text-slate-500">{new Date(conversation.updatedAt).toLocaleDateString('pt-BR')}</p>
+                <p className="truncate text-sm font-medium text-slate-700">{conversation.title}</p>
+                <p className="mt-1 text-xs text-slate-600">{new Date(conversation.updatedAt).toLocaleDateString('pt-BR')}</p>
               </button>
-              <button type="button" onClick={() => void deleteConversation(conversation.id)} aria-label="Excluir conversa" className="mr-2 rounded-lg p-2 text-slate-500 opacity-100 transition-colors hover:bg-rose-500/10 hover:text-rose-400 focus-visible:ring-2 focus-visible:ring-rose-400 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
+              <button type="button" onClick={() => void deleteConversation(conversation.id)} aria-label="Excluir conversa" className="mr-2 rounded-lg p-2 text-slate-600 opacity-100 transition-colors hover:bg-rose-500/10 hover:text-rose-700 focus-visible:ring-2 focus-visible:ring-rose-400 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
@@ -171,51 +171,51 @@ export function ReportChat() {
       </aside>
 
       <div className="flex min-w-0 flex-col gap-5">
-        <header className="flex flex-col gap-4 rounded-[2rem] border border-indigo-500/20 p-6 glass-card sm:flex-row sm:items-center sm:justify-between">
+        <header className="flex flex-col gap-4 rounded-2xl border border-indigo-500/20 p-6 glass-card sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-indigo-400">
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-indigo-700">
               <Sparkles className="h-4 w-4" />Plano 3
             </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-white">Chat IA dos Relatorios</h1>
-            <p className="mt-2 text-sm text-slate-400">Pergunte sobre clientes, produtos, faturamento e oportunidades comerciais.</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Chat IA dos Relatorios</h1>
+            <p className="mt-2 text-sm text-slate-600">Pergunte sobre clientes, produtos, faturamento e oportunidades comerciais.</p>
           </div>
-          <MessageSquare className="hidden h-10 w-10 text-indigo-400 sm:block" />
+          <MessageSquare className="hidden h-10 w-10 text-indigo-700 sm:block" />
         </header>
 
-        <section className="flex flex-1 flex-col rounded-[2rem] p-5 glass-card">
+        <section className="flex flex-1 flex-col rounded-2xl p-5 glass-card">
           <div className="flex-1 space-y-4 overflow-y-auto" aria-live="polite">
             {messages.length === 0 ? (
               <div className="mx-auto max-w-2xl py-10 text-center">
-                <Bot className="mx-auto h-12 w-12 text-indigo-400" />
-                <h2 className="mt-4 text-xl font-bold text-white">Como posso ajudar na análise?</h2>
-                <p className="mt-2 text-sm text-slate-400">Escolha uma sugestão ou escreva sua pergunta. As respostas usam somente os relatórios autorizados para sua conta.</p>
+                <Bot className="mx-auto h-12 w-12 text-indigo-700" />
+                <h2 className="mt-4 text-xl font-bold text-slate-900">Como posso ajudar na análise?</h2>
+                <p className="mt-2 text-sm text-slate-600">Escolha uma sugestão ou escreva sua pergunta. As respostas usam somente os relatórios autorizados para sua conta.</p>
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
                   {SUGGESTIONS.map((suggestion) => (
-                    <button key={suggestion} type="button" onClick={() => void sendQuestion(suggestion)} className="rounded-2xl border border-white/10 bg-[#030712]/50 p-4 text-left text-sm text-slate-300 transition-colors hover:border-indigo-500/40 hover:bg-indigo-500/10">
+                    <button key={suggestion} type="button" onClick={() => void sendQuestion(suggestion)} className="rounded-2xl border border-slate-200 bg-white p-4 text-left text-sm text-slate-700 transition-colors hover:border-indigo-500/40 hover:bg-indigo-500/10">
                       {suggestion}
                     </button>
                   ))}
                 </div>
               </div>
             ) : messages.map((message, index) => (
-              <div key={message.id ?? `${message.role}-${index}`} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                {message.role === 'assistant' && <Bot className="mt-2 h-5 w-5 shrink-0 text-indigo-400" />}
-                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === 'user' ? 'whitespace-pre-wrap bg-indigo-600 text-white' : 'border border-white/10 bg-[#030712]/60 text-slate-200'}`}>
+              <div key={message.id ?? `${message.role}-${index}`} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'} `}>
+                {message.role === 'assistant' && <Bot className="mt-2 h-5 w-5 shrink-0 text-indigo-700" />}
+                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === 'user' ? 'whitespace-pre-wrap bg-indigo-600 text-white' : 'border border-slate-200 bg-white text-slate-700'} `}>
                   {message.role === 'assistant' ? <AssistantMarkdown content={message.content} /> : message.content}
                 </div>
-                {message.role === 'user' && <User className="mt-2 h-5 w-5 shrink-0 text-slate-400" />}
+                {message.role === 'user' && <User className="mt-2 h-5 w-5 shrink-0 text-slate-600" />}
               </div>
             ))}
             {loading && (
-              <div className="flex items-center gap-3 text-sm text-slate-400">
-                <Loader2 className="h-5 w-5 animate-spin text-indigo-400" />Consultando os relatórios autorizados...
+              <div className="flex items-center gap-3 text-sm text-slate-600">
+                <Loader2 className="h-5 w-5 animate-spin text-indigo-700" />Consultando os relatórios autorizados...
               </div>
             )}
           </div>
 
-          {error && <p role="alert" className="mt-4 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</p>}
+          {error && <p role="alert" className="mt-4 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">{error}</p>}
 
-          <form onSubmit={(event) => { event.preventDefault(); void sendQuestion(question); }} className="mt-5 flex gap-3 border-t border-white/10 pt-5">
+          <form onSubmit={(event) => { event.preventDefault(); void sendQuestion(question); }} className="mt-5 flex gap-3 border-t border-slate-200 pt-5">
             <textarea
               aria-label="Pergunta para o Chat IA"
               value={question}
@@ -223,7 +223,7 @@ export function ReportChat() {
               maxLength={2000}
               rows={2}
               placeholder="Ex.: qual foi meu melhor cliente em 2026?"
-              className="min-h-14 flex-1 resize-none rounded-xl border border-white/10 bg-[#030712]/60 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-400"
+              className="min-h-14 flex-1 resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-600 focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-400"
             />
             <Button type="submit" aria-label="Enviar pergunta" disabled={loading || !question.trim()} className="h-auto bg-indigo-600 px-5 text-white hover:bg-indigo-700">
               <Send className="h-4 w-4" />
@@ -241,14 +241,14 @@ function AssistantMarkdown({ content }: { content: string }) {
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
       components={{
-        a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-indigo-300 underline underline-offset-2" />,
+        a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-indigo-700 underline underline-offset-2" />,
         p: ({ node: _node, ...props }) => <p {...props} className="mb-3 last:mb-0" />,
         ul: ({ node: _node, ...props }) => <ul {...props} className="mb-3 list-disc space-y-1 pl-5 last:mb-0" />,
         ol: ({ node: _node, ...props }) => <ol {...props} className="mb-3 list-decimal space-y-1 pl-5 last:mb-0" />,
-        code: ({ node: _node, ...props }) => <code {...props} className="rounded bg-white/10 px-1 py-0.5 font-mono text-xs text-indigo-200" />,
-        pre: ({ node: _node, ...props }) => <pre {...props} className="mb-3 overflow-x-auto rounded-xl bg-black/30 p-3 last:mb-0" />,
-        strong: ({ node: _node, ...props }) => <strong {...props} className="font-bold text-white" />,
-        em: ({ node: _node, ...props }) => <em {...props} className="italic text-slate-100" />,
+        code: ({ node: _node, ...props }) => <code {...props} className="rounded bg-slate-50 px-1 py-0.5 font-mono text-xs text-indigo-700" />,
+        pre: ({ node: _node, ...props }) => <pre {...props} className="mb-3 overflow-x-auto rounded-xl bg-slate-50 p-3 last:mb-0" />,
+        strong: ({ node: _node, ...props }) => <strong {...props} className="font-bold text-slate-900" />,
+        em: ({ node: _node, ...props }) => <em {...props} className="italic text-slate-700" />,
       }}
     >
       {content}

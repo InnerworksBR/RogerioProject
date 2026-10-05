@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { BarChart3, Home, Settings2, Sparkles, Upload, Users, UsersRound } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface ProtectedNavItem {
@@ -9,35 +10,25 @@ export interface ProtectedNavItem {
   label: string;
 }
 
-export function ProtectedNav({ items, variant = 'desktop' }: { items: ProtectedNavItem[]; variant?: 'desktop' | 'mobile' }) {
+const icons = { '/': Home, '/clientes': Users, '/upload': Upload, '/reports': BarChart3, '/chat': Sparkles, '/config': Settings2, '/team': UsersRound };
+
+export function ProtectedNav({ items }: { items: ProtectedNavItem[] }) {
   const pathname = usePathname();
   const isCurrent = (href: string) => href === '/'
     ? pathname === '/'
     : pathname === href || pathname.startsWith(`${href}/`);
 
-  if (variant === 'desktop') {
-    return (
-      <div className="hidden items-center gap-1 rounded-full border border-white/5 bg-white/5 p-1 md:flex">
-        {items.map((item) => (
-          <Link key={item.href} href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}
-            className={cn('rounded-full px-4 py-1.5 text-sm font-medium transition-all hover:bg-white/10 hover:text-white', isCurrent(item.href) ? 'bg-white/10 text-white' : 'text-slate-400')}>
-            {item.label}
-          </Link>
-        ))}
-      </div>
-    );
-  }
-
   return (
-      <div className="mt-3 overflow-x-auto pb-1 md:hidden">
-        <div className="flex min-w-max items-center gap-2">
-          {items.map((item) => (
-            <Link key={item.href} href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}
-              className={cn('rounded-full border px-3 py-1.5 text-sm font-medium transition-all hover:border-white/20 hover:text-white', isCurrent(item.href) ? 'border-indigo-400/40 bg-indigo-500/20 text-white' : 'border-white/10 bg-white/5 text-slate-400')}>
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      </div>
+    <nav aria-label="Navegação principal" className="mt-3 grid grid-cols-3 gap-1 sm:flex sm:flex-wrap sm:gap-2">
+      {items.map((item) => {
+        const Icon = icons[item.href as keyof typeof icons] ?? BarChart3;
+        return (
+          <Link key={item.href} href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}
+            className={cn('flex min-h-11 items-center justify-center gap-2 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:justify-start sm:px-4 sm:text-sm', isCurrent(item.href) ? 'bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900')}>
+            <Icon className="hidden size-4 shrink-0 min-[380px]:block" aria-hidden="true" />{item.label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

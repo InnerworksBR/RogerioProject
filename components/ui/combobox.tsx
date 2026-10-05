@@ -15,6 +15,7 @@ export interface ComboboxItem {
 }
 
 export interface ComboboxProps {
+  id?: string
   /** Lista completa de itens */
   items: ComboboxItem[]
   /** Valor selecionado atualmente (string) */
@@ -66,7 +67,7 @@ function ComboboxItemList({
 
   return (
     <>
-      <ComboboxPrimitive.Empty className="px-3 py-6 text-center text-sm text-slate-400">
+      <ComboboxPrimitive.Empty className="px-3 py-6 text-center text-sm text-slate-600">
         {emptyMessage}
       </ComboboxPrimitive.Empty>
       {filteredValues.map((itemValue) => {
@@ -78,14 +79,14 @@ function ComboboxItemList({
             value={item.value}
             className={cn(
               "flex w-full cursor-default items-center justify-between rounded-lg px-3 py-2",
-              "text-sm text-slate-200 outline-none select-none transition-colors",
-              "data-highlighted:bg-indigo-500/20 data-highlighted:text-white",
+              "text-sm text-slate-700 outline-none select-none transition-colors",
+              "data-highlighted:bg-indigo-500/20 data-highlighted:text-slate-900",
               "data-selected:font-semibold"
             )}
           >
             <span className="truncate">{item.label}</span>
             {item.sublabel && (
-              <span className="ml-3 shrink-0 rounded-md bg-white/5 px-2 py-0.5 font-mono text-xs text-slate-500">
+              <span className="ml-3 shrink-0 rounded-md bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-600">
                 {item.sublabel}
               </span>
             )}
@@ -105,6 +106,7 @@ function ComboboxItemList({
  * - Genérico: baseado em { value, label, sublabel? }, reutilizável pela impl 013
  */
 export function Combobox({
+  id,
   items,
   value,
   onValueChange,
@@ -169,13 +171,14 @@ export function Combobox({
         className={cn(
           "relative flex w-full items-center",
           "rounded-xl border border-input",
-          "bg-transparent dark:bg-input/30",
+          "bg-transparent",
           "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
           "transition-colors",
           inputGroupClassName
         )}
       >
         <ComboboxPrimitive.Input
+          id={id}
           aria-label={ariaLabel}
           placeholder={placeholder}
           onChange={
@@ -209,8 +212,8 @@ export function Combobox({
           <ComboboxPrimitive.Popup
             className={cn(
               "origin-(--transform-origin)",
-              "max-h-72 overflow-y-auto rounded-xl p-1 shadow-2xl",
-              "border border-white/10 bg-[#080d1e]/95 backdrop-blur-xl",
+              "max-h-72 overflow-y-auto rounded-xl p-1 shadow-sm",
+              "border border-slate-200 bg-white backdrop-blur-xl",
               "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95",
               "data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
               "duration-150"

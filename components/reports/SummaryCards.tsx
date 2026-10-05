@@ -2,7 +2,6 @@
 
 import {
   type LucideIcon,
-  ArrowUpRight,
   Calendar,
   Layers,
   Package,
@@ -48,33 +47,30 @@ function KPICard({
   variant?: 'default' | 'indigo' | 'emerald' | 'amber' | 'blue' | 'rose';
 }) {
   const variants = {
-    default: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-    indigo: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
-    emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    amber: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    blue: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-    rose: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+    default: 'bg-indigo-500/10 text-indigo-600',
+    indigo: 'bg-indigo-500/10 text-indigo-600',
+    emerald: 'bg-emerald-500/10 text-emerald-700',
+    amber: 'bg-amber-500/10 text-amber-700',
+    blue: 'bg-blue-500/10 text-blue-600',
+    rose: 'bg-rose-500/10 text-rose-600',
   };
 
   return (
-    <div className="glass-card rounded-2xl p-5 group transition-all duration-300 hover:translate-y-[-4px]">
+    <div className="glass-card min-w-0 rounded-xl p-4">
       <div className="flex justify-between items-start mb-3">
         <div className={`p-2.5 rounded-xl ${variants[variant]} transition-colors group-hover:bg-opacity-20`}>
           <Icon size={20} strokeWidth={2.5} />
         </div>
-        <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-full text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-          <ArrowUpRight size={14} />
-        </div>
       </div>
       <div>
-        <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+        <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
           {title}
         </h3>
-        <p className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+        <p className="break-words text-xl font-semibold tabular-nums text-slate-900 tracking-tight xl:text-2xl">
           {value}
         </p>
         {sub && (
-          <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-tighter">
+          <p className="text-xs text-slate-600 mt-2 leading-relaxed">
             {sub}
           </p>
         )}
@@ -86,9 +82,9 @@ function KPICard({
 function KPICardSkeleton() {
   return (
     <div className="glass-card rounded-2xl p-5 animate-pulse">
-      <div className="w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-xl mb-4" />
-      <div className="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded-full mb-2" />
-      <div className="h-6 w-28 bg-slate-200 dark:bg-slate-800 rounded-full" />
+      <div className="w-10 h-10 bg-slate-200 rounded-xl mb-4" />
+      <div className="h-3 w-20 bg-slate-200 rounded-full mb-2" />
+      <div className="h-6 w-28 bg-slate-200 rounded-full" />
     </div>
   );
 }
@@ -107,7 +103,7 @@ export function SummaryCards({
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
         {Array.from({ length: 6 }).map((_, index) => <KPICardSkeleton key={index} />)}
       </div>
     );
@@ -116,13 +112,13 @@ export function SummaryCards({
   if (error) {
     const isNetwork = error.toLowerCase().includes('failed to fetch') || error.toLowerCase().includes('networkerror');
     return (
-      <div className="rounded-2xl border border-amber-200/60 bg-amber-50/60 dark:bg-amber-950/10 dark:border-amber-800/40 p-5 text-sm text-amber-700 dark:text-amber-400">
+      <div className="rounded-2xl border border-amber-200/60 bg-amber-50/60 p-5 text-sm text-amber-700">
         <p className="font-semibold">
           {isNetwork ? 'Sem conexão com o banco de dados' : 'Erro ao carregar indicadores'}
         </p>
         <p className="mt-1 text-xs opacity-80">
           {isNetwork
-            ? 'Não foi possível ler os dados do Supabase. Verifique a conexão e recarregue a página.'
+            ? 'Não foi possível carregar seus dados. Verifique a conexão e recarregue a página.'
             : error}
         </p>
       </div>
@@ -132,10 +128,10 @@ export function SummaryCards({
   if (!data) {
     return (
       <div className="glass-card rounded-2xl border-dashed p-6">
-        <p className="text-sm font-semibold text-slate-900 dark:text-white">
+        <p className="text-sm font-semibold text-slate-900">
           Nenhum dado disponível no dashboard.
         </p>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-slate-600">
           Faça upload de uma planilha para liberar os indicadores e os relatórios analíticos.
         </p>
       </div>
@@ -145,15 +141,15 @@ export function SummaryCards({
   if (summaries.length > 1) {
     return (
       <div className="glass-card overflow-hidden rounded-2xl">
-        <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-          <h2 className="font-bold text-slate-950 dark:text-white">Comparativo dos anos selecionados</h2>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <h2 className="font-bold text-slate-950">Comparativo dos anos selecionados</h2>
+          <p className="mt-1 text-xs text-slate-600">
             Indicadores calculados separadamente para preservar a leitura de cada período.
           </p>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-[760px] w-full text-sm">
-            <thead className="bg-slate-50 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
+            <thead className="bg-slate-50 text-left text-xs font-bold uppercase tracking-wider text-slate-600">
               <tr>
                 <th className="px-5 py-3">Ano</th>
                 <th className="px-5 py-3">Faturado</th>
@@ -165,8 +161,8 @@ export function SummaryCards({
             </thead>
             <tbody>
               {summaries.map(({ year, summary }) => (
-                <tr key={year} className="border-t border-slate-100 dark:border-slate-800">
-                  <th scope="row" className="px-5 py-3 text-left font-black text-indigo-600 dark:text-indigo-400">{year}</th>
+                <tr key={year} className="border-t border-slate-100">
+                  <th scope="row" className="px-5 py-3 text-left font-bold text-indigo-600">{year}</th>
                   <td className="px-5 py-3 font-semibold">{fmtBRL(summary?.total_faturado)}</td>
                   <td className="px-5 py-3">{fmt(summary?.total_pedidos)}</td>
                   <td className="px-5 py-3">{fmt(summary?.num_clientes)}</td>
@@ -182,7 +178,7 @@ export function SummaryCards({
   }
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
       <KPICard
         title="Total Pedidos"
         variant="indigo"

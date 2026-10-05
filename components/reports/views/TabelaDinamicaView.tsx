@@ -18,7 +18,7 @@ export function TabelaDinamicaView({ rows: data, loading, error, truncated }: Re
 
   const columns = useMemo<ColumnDef<TabelaDinamicaRow>[]>(() => [
     { header: 'Ano', accessorKey: 'ano', size: 70 },
-    { header: 'Cód. Cliente', accessorKey: 'cod_cliente', size: 100 },
+    { header: 'Cód. Cliente', accessorKey: 'cod_cliente', size: 110, cell: (info) => { const code = String(info.getValue() ?? ''); return code.startsWith('group:') ? 'Consolidado' : code; } },
     { header: 'Cliente', accessorKey: 'nome_cliente', size: 250 },
     { header: 'Cód. Referência', accessorKey: 'cod_referencia', size: 120 },
     { header: 'Produto', accessorKey: 'descr_produto', size: 300 },
@@ -75,12 +75,12 @@ export function TabelaDinamicaView({ rows: data, loading, error, truncated }: Re
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/20 dark:text-rose-300">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
           Erro ao carregar o relatório: {error}
         </div>
       )}
 
-      {truncated && <p className="text-xs text-amber-500">Resultado limitado para proteger o banco. Refine os filtros ou exporte o relatório completo.</p>}
+      {truncated && <p className="text-xs text-amber-700">Resultado limitado para proteger o banco. Refine os filtros ou exporte o relatório completo.</p>}
 
       <ReportTable
         data={data}
