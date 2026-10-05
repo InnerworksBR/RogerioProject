@@ -262,6 +262,7 @@ export async function getClientSalesHistory(codCliente: string): Promise<ClientS
       .from('sales_rows')
       .select(`
         id,
+        user_id,
         cod_cliente,
         nome_cliente,
         apelido,

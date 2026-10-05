@@ -1,5 +1,6 @@
 export interface ClientSalesRow {
   id: number;
+  user_id?: string;
   cod_cliente: string;
   nome_cliente: string;
   apelido: string | null;

@@ -84,8 +84,12 @@ test('canonical client dashboard keeps aggregate loading and defers raw chronolo
   const dashboard = await read('components/client-dashboard/ClientVisitDashboard.tsx');
   assert.match(dashboard, /Promise\.all\(\[/);
   assert.match(dashboard, /buildClientVisitDashboardFromAggregates/);
-  assert.match(dashboard, /activeTab !== 'produtos'/);
-  assert.match(dashboard, /getClientSalesHistory\(selectedClient\)/);
+  const comparison = await read('components/client-dashboard/ClientCommercialAnalysis.tsx');
+  assert.match(comparison, /enabled: activeTab !== 'resumo'/);
+  assert.match(comparison, /getClientSalesHistory\(clientId\)/);
+  for (const operation of ['comparison', 'year', 'products']) {
+    assert.match(comparison, new RegExp(`queryKey: \\[\\s*'reports', 'client-commercial-${operation}', userId, clientId`));
+  }
 });
 
 test('report filters and exports expose the complete bounded multi-year flow', async () => {

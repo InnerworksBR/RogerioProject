@@ -23,7 +23,6 @@ import {
   getClientDashboardSummary,
   getClientMonthlyTrend,
   getClientRecentOrders,
-  getClientSalesHistory,
   getClientTopProducts,
   getClientYearlyHistory,
   searchClients,
@@ -42,10 +41,11 @@ import type {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Combobox, type ComboboxItem } from '@/components/ui/combobox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEnsureReportYears } from '@/components/reports/useEnsureReportYears';
 import { SharedDashboardClientView } from '@/app/shared/client/[token]/SharedDashboardClientView';
 import { ShareLinksManager } from './ShareLinksManager';
+import { ClientCommercialAnalysis } from './ClientCommercialAnalysis';
+import { MAX_COMPARISON_YEARS } from '@/types/reportApi';
 
 export const fmtBRL = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -921,12 +921,18 @@ function ShareDashboardButton({ clientId, year }: { clientId: string; year: numb
   );
 }
 
-export function ClientVisitDashboard() {
-  const { selectedClient, selectedClientName, selectedYear, setClient, setYear } =
+export function ClientVisitDashboard({ userId }: { userId: string }) {
+  const { selectedClient, selectedClientName, selectedYear, selectedYears, setClient, setYear, setYears } =
     useFilterStore();
   const { availableYears, loadingYears, yearsError } = useEnsureReportYears();
   const [isPending, startTransition] = useTransition();
   const [dashboardMode, setDashboardMode] = useState<'cliente' | 'consultor'>('cliente');
+  const comparisonYears = useMemo(() => {
+    const valid = selectedYears.filter((year) => availableYears.includes(year));
+    if (valid.length > 0) return [...new Set(valid)].sort((a, b) => a - b);
+    const fallback = selectedYear && availableYears.includes(selectedYear) ? selectedYear : availableYears.at(-1);
+    return fallback ? [fallback] : [];
+  }, [selectedYears, availableYears, selectedYear]);
   // ── Busca de clientes: agora paginada e filtrada no banco ──
   const [clientQuery, setClientQuery] = useState('');
   const [clients, setClients] = useState<{ cod_cliente: string; nome_cliente: string }[]>([]);
@@ -938,9 +944,6 @@ export function ClientVisitDashboard() {
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
 
-  const [rows, setRows] = useState<ClientSalesRow[]>([]);
-  const [loadedRowsClient, setLoadedRowsClient] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('resumo');
 
   // Busca de clientes com debounce (300 ms) via RPC search_clients
   useEffect(() => {
@@ -970,23 +973,25 @@ export function ClientVisitDashboard() {
     };
   }, [clientQuery]);
 
-  // Ao selecionar cliente + ano, uma única leitura alimenta resumo, histórico e produtos.
+  // A apresentação mantém um ano de referência; a análise tem sua própria carga comparativa.
   useEffect(() => {
     let active = true;
+
+    if (dashboardMode !== 'cliente') {
+      setLoadingDashboard(false);
+      return () => { active = false; };
+    }
 
     if (!selectedClient || !selectedYear) {
       setDashboardData(null);
       setDashboardError(null);
       setLoadingDashboard(false);
-      setRows([]);
-      setLoadedRowsClient(null);
       return () => { active = false; };
     }
 
     setLoadingDashboard(true);
     setDashboardError(null);
     setDashboardData(null);
-    setRows([]);
 
     Promise.all([
       getClientDashboardSummary(selectedClient, selectedYear),
@@ -1021,56 +1026,12 @@ export function ClientVisitDashboard() {
       });
 
     return () => { active = false; };
-  }, [selectedClient, selectedYear]);
-
-  // A cronologia detalhada precisa das linhas; carregá-las só ao abrir Produtos.
-  useEffect(() => {
-    if (activeTab !== 'produtos' || !selectedClient || loadedRowsClient === selectedClient) return;
-
-    let active = true;
-    getClientSalesHistory(selectedClient)
-      .then((data) => {
-        if (!active) return;
-        setRows(data);
-      })
-      .catch((error) => {
-        if (!active) return;
-        toast.error(error instanceof Error ? error.message : 'Erro ao carregar a cronologia de produtos.');
-      })
-      .finally(() => {
-        if (active) setLoadedRowsClient(selectedClient);
-      });
-
-    return () => { active = false; };
-  }, [activeTab, loadedRowsClient, selectedClient]);
+  }, [selectedClient, selectedYear, dashboardMode]);
 
   const selectedClientRecord = useMemo(
     () => clients.find((client) => client.cod_cliente === selectedClient),
     [clients, selectedClient]
   );
-
-  const headlineCards = useMemo<ClientVisitInsight[]>(() => {
-    if (dashboardMode === 'consultor') {
-      return (dashboardData?.insights ?? []).slice(0, 2);
-    }
-
-    if (!dashboardData || !selectedYear) {
-      return [];
-    }
-
-    return [
-      {
-        title: 'Visão pronta para apresentar',
-        description: `Mostra a evolução das compras em ${selectedYear}, o histórico do relacionamento e o mix de produtos em um formato mais limpo.`,
-        tone: 'positive',
-      },
-      {
-        title: 'Base da conversa',
-        description: `O cliente tem ${fmtNumber(dashboardData.summary.orderCount)} pedidos no ano e ${fmtNumber(dashboardData.summary.uniqueProducts)} produtos ativos no mix analisado.`,
-        tone: 'neutral',
-      },
-    ];
-  }, [dashboardData, dashboardMode, selectedYear]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -1079,7 +1040,7 @@ export function ClientVisitDashboard() {
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 lg:text-4xl">
             {dashboardMode === 'cliente'
               ? 'Apresentação ao Cliente'
-              : 'Análise do cliente'}
+              : 'Análise comercial'}
           </h1>
           <p className="text-slate-600 mt-2 max-w-xl">
             Escolha um cliente para acompanhar as compras e preparar sua próxima visita.
@@ -1112,7 +1073,7 @@ export function ClientVisitDashboard() {
         </div>
       </header>
 
-      <div className="glass-card rounded-2xl p-4 flex flex-col xl:flex-row gap-4 items-center z-50 relative">
+      <div className="glass-card rounded-2xl p-4 flex flex-col xl:flex-row gap-4 items-center">
         <div className="flex-1 w-full">
           <Combobox
             aria-label="Buscar cliente por código ou nome"
@@ -1139,22 +1100,25 @@ export function ClientVisitDashboard() {
         </div>
 
         {availableYears.length > 0 && (
-          <div className="flex bg-white border border-slate-200 p-1.5 rounded-xl w-full xl:w-auto overflow-x-auto custom-scrollbar">
-            {availableYears.slice().sort((a, b) => b - a).map((year) => (
-              <Button
-                key={year}
-                variant="ghost"
-                className={cn(
-                  'rounded-lg px-6 h-11 shrink-0',
-                  selectedYear === year ? 'bg-indigo-500/20 text-indigo-700 font-bold' : 'text-slate-600 hover:text-slate-900'
-                )}
-                aria-pressed={selectedYear === year}
-                onClick={() => setYear(year)}
-              >
-                {year}
-              </Button>
-            ))}
-          </div>
+          <fieldset className="w-full min-w-0 xl:w-auto">
+            <legend className="mb-2 text-sm font-semibold text-slate-700">
+              {dashboardMode === 'consultor' ? 'Anos para comparar' : 'Ano da apresentação'}
+            </legend>
+            <div className="flex flex-wrap gap-1.5 rounded-xl border border-border bg-white p-1.5">
+              {availableYears.slice().sort((a, b) => b - a).map((year) => {
+                const active = dashboardMode === 'consultor' ? comparisonYears.includes(year) : selectedYear === year;
+                return <Button key={year} variant={active ? 'default' : 'ghost'} className="h-11 rounded-lg px-5"
+                  aria-pressed={active}
+                  disabled={dashboardMode === 'consultor' && !active && comparisonYears.length >= MAX_COMPARISON_YEARS}
+                  onClick={() => {
+                    if (dashboardMode === 'cliente') { setYear(year); return; }
+                    if (active && comparisonYears.length === 1) { toast.info('Mantenha ao menos um ano selecionado.'); return; }
+                    setYears(active ? comparisonYears.filter((item) => item !== year) : [...comparisonYears, year]);
+                  }}>{year}</Button>;
+              })}
+            </div>
+            {dashboardMode === 'consultor' && <p className="mt-2 text-xs text-slate-600">Selecione de 1 a {MAX_COMPARISON_YEARS} anos. Clique novamente para remover.</p>}
+          </fieldset>
         )}
 
         {dashboardMode === 'cliente' && selectedClient && selectedYear && (
@@ -1165,9 +1129,9 @@ export function ClientVisitDashboard() {
         )}
       </div>
 
-      {(clientsError || yearsError || dashboardError) && (
+      {(clientsError || yearsError || (dashboardMode === 'cliente' && dashboardError)) && (
         <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">
-          {clientsError ?? yearsError ?? dashboardError}
+          {clientsError ?? yearsError ?? (dashboardMode === 'cliente' ? dashboardError : null)}
         </div>
       )}
 
@@ -1185,7 +1149,7 @@ export function ClientVisitDashboard() {
         </div>
       )}
 
-      {(loadingDashboard || isPending || loadingYears) && selectedClient && (
+      {dashboardMode === 'cliente' && (loadingDashboard || isPending || loadingYears) && selectedClient && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="glass-card h-32 animate-pulse rounded-2xl sm:h-36" />
@@ -1193,174 +1157,22 @@ export function ClientVisitDashboard() {
         </div>
       )}
 
-      {selectedClient && !loadingDashboard && !loadingYears && dashboardData && (
-        <>
-          {dashboardMode === 'cliente' ? (
-            <>
-              <div className="relative rounded-2xl overflow-hidden mt-6 border border-border">
-                <SharedDashboardClientView
-                  dashboardData={dashboardData}
-                  clientName={selectedClientName || selectedClientRecord?.nome_cliente || ''}
-                  year={selectedYear!}
-                  rows={rows}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard
-              title="Faturamento no ano"
-              value={fmtBRL(dashboardData.summary.totalRevenue)}
-              subtitle={`Base ${selectedYear! - 1}: ${fmtBRL(dashboardData.summary.previousRevenue)}`}
-              delta={getDeltaLabel(
-                dashboardData.summary.totalRevenue,
-                dashboardData.summary.previousRevenue
-              )}
-              tone={
-                dashboardData.summary.totalRevenue >= dashboardData.summary.previousRevenue
-                  ? 'positive'
-                  : 'warning'
-              }
-              icon={Wallet}
-            />
-            <MetricCard
-              title="Unidades"
-              value={fmtNumber(dashboardData.summary.totalUnits)}
-              subtitle={`Melhor mês: ${dashboardData.summary.bestMonthLabel}`}
-              delta={getDeltaLabel(
-                dashboardData.summary.totalUnits,
-                dashboardData.summary.previousUnits
-              )}
-              tone={
-                dashboardData.summary.totalUnits >= dashboardData.summary.previousUnits
-                  ? 'positive'
-                  : 'warning'
-              }
-              icon={Package}
-            />
-            <MetricCard
-              title="Pedidos"
-              value={fmtNumber(dashboardData.summary.orderCount)}
-              subtitle={`${dashboardData.summary.activeMonths} meses com compra no ano`}
-              delta={getDeltaLabel(
-                dashboardData.summary.orderCount,
-                dashboardData.summary.previousOrderCount
-              )}
-              tone={
-                dashboardData.summary.orderCount >= dashboardData.summary.previousOrderCount
-                  ? 'positive'
-                  : 'warning'
-              }
-              icon={ShoppingCart}
-            />
-            <MetricCard
-              title="Produtos ativos"
-              value={fmtNumber(dashboardData.summary.uniqueProducts)}
-              subtitle={`Ano anterior: ${fmtNumber(dashboardData.summary.previousUniqueProducts)}`}
-              delta={getDeltaLabel(
-                dashboardData.summary.uniqueProducts,
-                dashboardData.summary.previousUniqueProducts
-              )}
-              tone={
-                dashboardData.summary.uniqueProducts >=
-                dashboardData.summary.previousUniqueProducts
-                  ? 'positive'
-                  : 'neutral'
-              }
-              icon={TrendingUp}
-            />
-          </section>
-
-          <Tabs
-            defaultValue="resumo"
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="space-y-5"
-          >
-            <div className="overflow-x-auto pb-1">
-              <TabsList className="min-w-max bg-slate-50 p-1">
-                <TabsTrigger value="resumo" className="px-4">
-                  Resumo
-                </TabsTrigger>
-                <TabsTrigger value="produtos" className="px-4">
-                  Produtos
-                </TabsTrigger>
-                <TabsTrigger value="oportunidades" className="px-4">
-                  Oportunidades
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value="resumo" className="space-y-6">
-              <section className="grid gap-3 lg:grid-cols-3">
-                <QuickFactCard
-                  title="Ticket médio"
-                  value={fmtBRL(dashboardData.summary.averageTicket)}
-                  description={`Base anterior: ${fmtBRL(dashboardData.summary.previousAverageTicket)}`}
-                  icon={ArrowUpRight}
-                />
-                <QuickFactCard
-                  title="Última compra"
-                  value={fmtDate(dashboardData.summary.lastOrderDate)}
-                  description={`${dashboardData.summary.yearsActive} anos de histórico`}
-                  icon={CalendarClock}
-                />
-                <QuickFactCard
-                  title="Histórico acumulado"
-                  value={fmtBRL(dashboardData.summary.lifetimeRevenue)}
-                  description={`${fmtNumber(dashboardData.summary.lifetimeOrders)} pedidos em toda a base`}
-                  icon={Wallet}
-                />
-              </section>
-
-              <section className="grid gap-6 xl:grid-cols-[1.45fr_0.95fr]">
-                <MonthlyComparisonChart
-                  data={dashboardData.monthlyTrend}
-                  selectedYear={selectedYear!}
-                />
-                <YearHistoryPanel
-                  data={dashboardData.yearlyHistory}
-                  selectedYear={selectedYear!}
-                />
-              </section>
-
-              <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-                <TopProductsList products={dashboardData.topProducts} />
-                <RecentOrdersList orders={dashboardData.recentOrders} limit={4} />
-              </section>
-            </TabsContent>
-
-            <TabsContent value="produtos" className="space-y-6">
-              <ProductExplorer
-                title="Mapa completo de produtos"
-                description="Veja todos os produtos comprados pelo cliente e clique para abrir a cronologia mensal de cada item."
-                products={dashboardData.allProducts}
-                rows={rows}
-              />
-            </TabsContent>
-
-            <TabsContent value="oportunidades" className="space-y-6">
-              <section className="grid gap-6 xl:grid-cols-2">
-                <OpportunityList
-                  title="Itens que esfriaram"
-                  description="Ótimos candidatos para retomada de conversa ou revisão de mix."
-                  items={dashboardData.attentionProducts}
-                />
-                <OpportunityList
-                  title="Produtos em expansão"
-                  description="O que vem crescendo e pode abrir espaço para novas ofertas."
-                  items={dashboardData.growthProducts}
-                />
-              </section>
-            </TabsContent>
-          </Tabs>
-            </>
-          )}
-        </>
+      {dashboardMode === 'consultor' && selectedClient && !loadingYears && comparisonYears.length > 0 && (
+        <ClientCommercialAnalysis key={selectedClient} userId={userId} clientId={selectedClient} years={comparisonYears} />
       )}
 
-      {selectedClient && !loadingDashboard && !loadingYears && dashboardData === null && !dashboardError && (
+      {dashboardMode === 'cliente' && selectedClient && !loadingDashboard && !loadingYears && dashboardData && (
+        <div className="relative mt-6 overflow-hidden rounded-2xl border border-border">
+          <SharedDashboardClientView
+            dashboardData={dashboardData}
+            clientName={selectedClientName || selectedClientRecord?.nome_cliente || ''}
+            year={selectedYear!}
+            rows={[]}
+          />
+        </div>
+      )}
+
+      {dashboardMode === 'cliente' && selectedClient && !loadingDashboard && !loadingYears && dashboardData === null && !dashboardError && (
         <div className="glass-card rounded-2xl p-8 text-center">
           <AlertTriangle className="mx-auto h-10 w-10 text-amber-700" />
           <h2 className="mt-4 text-2xl font-bold text-slate-950">
