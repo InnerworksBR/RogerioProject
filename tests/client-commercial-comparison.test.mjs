@@ -5,6 +5,7 @@ import path from 'node:path';
 
 const {
   buildMonthlyComparison, buildMonthlyTrendComparison, buildProductComparison, buildComparisonOpportunities, comparisonDelta,
+  resolveClientPresentationYear,
 } = await import(pathToFileURL(path.join(process.cwd(), 'lib/clientComparison.ts')).href);
 
 const row = (overrides = {}) => ({
@@ -13,6 +14,25 @@ const row = (overrides = {}) => ({
   codigo_pedido: 'order-1', numero_pedido_talao: null, pedido_cliente_opc: null,
   quantidade: 2, valor_total: 100, preco_unitario: 50, descr_hist_financ: null,
   ano: 2024, mes: 1, ...overrides,
+});
+
+test('presentation uses the latest selected year with actual purchases instead of an empty current year', () => {
+  const history = [
+    { ano: 2024, mes: 1, total_faturado: 50 },
+    { ano: 2025, mes: 2, total_faturado: 100 },
+  ];
+  assert.equal(resolveClientPresentationYear([2024, 2025, 2026], history), 2025);
+  assert.equal(resolveClientPresentationYear([2024, 2026], history), 2024);
+  assert.equal(resolveClientPresentationYear([2026], history), null);
+  assert.equal(resolveClientPresentationYear([], history), null);
+});
+
+test('purchase year detection preserves zero or negative totals and ignores invalid months', () => {
+  assert.equal(resolveClientPresentationYear([2025, 2026], [
+    { ano: 2025, mes: 1, total_faturado: -100 },
+    { ano: 2026, mes: 2, total_faturado: 0 },
+  ]), 2026);
+  assert.equal(resolveClientPresentationYear([2026], [{ ano: 2026, mes: 0 }]), null);
 });
 
 test('monthly comparison uses the explicitly selected, nonconsecutive years', () => {

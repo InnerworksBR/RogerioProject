@@ -25,6 +25,14 @@ export interface ComparisonProduct {
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 const emptyValues = (): ComparisonValues => ({ revenue: 0, units: 0, orders: 0 });
 
+export function resolveClientPresentationYear(years: number[], rows: ClientMonthlyTrendRow[]): number | null {
+  const selected = new Set(years);
+  const yearsWithPurchases = rows
+    .filter((row) => selected.has(row.ano) && row.mes >= 1 && row.mes <= 12)
+    .map((row) => row.ano);
+  return yearsWithPurchases.length > 0 ? Math.max(...yearsWithPurchases) : null;
+}
+
 export function createComparisonMonths(years: number[]): ComparisonMonth[] {
   return MONTHS.map((label, index) => ({
     month: index + 1,

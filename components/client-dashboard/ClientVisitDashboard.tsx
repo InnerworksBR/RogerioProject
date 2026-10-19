@@ -22,7 +22,8 @@ import { toast } from 'sonner';
 import { buildClientVisitDashboardFromAggregates } from '@/lib/clientDashboard';
 import { searchClients } from '@/lib/reportQueries';
 import { clientProductsOptions, clientSummaryOptions, clientTrendOptions } from '@/lib/client/clientDashboardQueries';
-import { buildMonthlyTrendComparison } from '@/lib/clientComparison';
+import { buildMonthlyTrendComparison, resolveClientPresentationYear } from '@/lib/clientComparison';
+import { copyClientShareLink, createClientShareLink } from '@/lib/client/shareApi';
 import { normalizeSearchText } from '@/lib/text';
 import { cn } from '@/lib/utils';
 import { useFilterStore } from '@/store/filterStore';
@@ -865,45 +866,40 @@ export function RecentOrdersList({
   );
 }
 
-function ShareDashboardButton({ clientId, year }: { clientId: string; year: number }) {
+function ShareDashboardButton({ clientId, year, disabled = false }: { clientId: string; year: number | null; disabled?: boolean }) {
   const [loading, setLoading] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+
+  const copyLink = async (link: string) => {
+    if (await copyClientShareLink(link, navigator.clipboard)) {
+      toast.success('Link copiado para a área de transferência!');
+    } else {
+      toast.warning('Link gerado. Use o campo abaixo para copiar ou abrir a apresentação.');
+    }
+  };
 
   const handleShare = async () => {
+    if (year === null || disabled) return;
     setLoading(true);
     try {
-      const response = await fetch('/api/share/client', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId, year }),
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        let errStr = response.statusText;
-        try {
-          const errData = await response.json();
-          if (errData.error) errStr = errData.error;
-          if (errData.details) errStr += ` - ${errData.details}`;
-        } catch (e) {}
-        throw new Error(`Falha ao gerar link: ${errStr}`);
-      }
-
-      const data = await response.json();
-      await navigator.clipboard.writeText(data.shareLink);
+      const data = await createClientShareLink(clientId, year);
+      setGeneratedLink(data.shareLink);
       window.dispatchEvent(new Event('share-links-updated'));
-      toast.success('Link copiado para a área de transferência!');
+      await copyLink(data.shareLink);
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao gerar o link de compartilhamento.');
+      toast.error(error instanceof Error ? error.message : 'Não foi possível gerar o link. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
+    <div className="space-y-2">
     <Button
       onClick={handleShare}
-      disabled={loading}
+      disabled={loading || disabled || year === null}
+      title={year === null ? 'Selecione um ano em que este cliente tenha compras.' : `Compartilhar apresentação de ${year}`}
       variant="outline"
       className="rounded-full px-4 border-indigo-200 hover:bg-indigo-50 text-indigo-700"
     >
@@ -914,6 +910,19 @@ function ShareDashboardButton({ clientId, year }: { clientId: string; year: numb
       )}
       Compartilhar Visão
     </Button>
+    {generatedLink && (
+      <div className="w-full min-w-0 space-y-2 xl:w-64" role="status">
+        <label className="block text-xs font-medium text-slate-600">
+          Link gerado · {year}
+          <Input aria-label="Link de compartilhamento gerado" value={generatedLink} readOnly className="mt-1 text-xs" onFocus={(event) => event.target.select()} />
+        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button size="sm" variant="outline" onClick={() => void copyLink(generatedLink)}><Copy className="mr-1 size-3" />Copiar link</Button>
+          <a href={generatedLink} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-indigo-700 underline">Abrir apresentação</a>
+        </div>
+      </div>
+    )}
+    </div>
   );
 }
 
@@ -936,26 +945,30 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
   const [clientsLoading, setClientsLoading] = useState(false);
 
   const presentationEnabled = dashboardMode === 'cliente' && !!selectedClient && !!selectedYear;
-  const summaryQuery = useQuery({
-    ...clientSummaryOptions(userId, selectedClient ?? '', selectedYear ?? 0),
-    enabled: presentationEnabled,
-  });
-  const productsQuery = useQuery({
-    ...clientProductsOptions(userId, selectedClient ?? '', selectedYear ?? 0),
-    enabled: presentationEnabled,
-  });
   const trendQueries = useQueries({
     queries: comparisonYears.map((year) => ({
       ...clientTrendOptions(userId, selectedClient ?? '', year),
       enabled: presentationEnabled,
     })),
   });
-  const currentTrend = trendQueries[comparisonYears.indexOf(selectedYear ?? 0)]?.data;
+  const trendsReady = comparisonYears.length > 0 && trendQueries.every((query) => query.isSuccess);
+  const presentationYear = trendsReady ? resolveClientPresentationYear(
+    comparisonYears, trendQueries.flatMap((query) => query.data ?? [])
+  ) : null;
+  const summaryQuery = useQuery({
+    ...clientSummaryOptions(userId, selectedClient ?? '', presentationYear ?? 0),
+    enabled: presentationEnabled && presentationYear !== null,
+  });
+  const productsQuery = useQuery({
+    ...clientProductsOptions(userId, selectedClient ?? '', presentationYear ?? 0),
+    enabled: presentationEnabled && presentationYear !== null,
+  });
+  const currentTrend = trendQueries[comparisonYears.indexOf(presentationYear ?? 0)]?.data;
   const dashboardData = useMemo(() => summaryQuery.data?.length && currentTrend && productsQuery.data
-    ? buildClientVisitDashboardFromAggregates(summaryQuery.data, currentTrend, [], productsQuery.data, [], selectedYear!)
-    : null, [summaryQuery.data, currentTrend, productsQuery.data, selectedYear]);
+    ? buildClientVisitDashboardFromAggregates(summaryQuery.data, currentTrend, [], productsQuery.data, [], presentationYear!)
+    : null, [summaryQuery.data, currentTrend, productsQuery.data, presentationYear]);
   const loadingDashboard = presentationEnabled && (
-    summaryQuery.isPending || productsQuery.isPending || trendQueries.some((query) => query.isPending)
+    !trendsReady || (presentationYear !== null && (summaryQuery.isPending || productsQuery.isPending))
   ) && !summaryQuery.isError && !productsQuery.isError && !trendQueries.some((query) => query.isError);
   const dashboardError = summaryQuery.error?.message ?? productsQuery.error?.message
     ?? trendQueries.find((query) => query.error)?.error?.message ?? null;
@@ -1082,14 +1095,14 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
               })}
             </div>
             <p className="mt-2 text-xs text-slate-600">Selecione de 1 a {MAX_COMPARISON_YEARS} anos para sobrepor no gráfico. Clique novamente para remover.</p>
-            {dashboardMode === 'cliente' && selectedYear && <p className="mt-1 text-xs text-slate-600">Indicadores e link compartilhado: {selectedYear}.</p>}
+            {dashboardMode === 'cliente' && presentationYear !== null && <p className="mt-1 text-xs text-slate-600">Indicadores e link compartilhado: {presentationYear}.{presentationYear !== selectedYear && ' Último ano selecionado com compras.'}</p>}
           </fieldset>
         )}
 
         {dashboardMode === 'cliente' && selectedClient && selectedYear && (
           <div className="w-full xl:w-auto shrink-0">
-            <ShareDashboardButton clientId={selectedClient} year={selectedYear} />
-            <ShareLinksManager clientId={selectedClient} year={selectedYear} />
+            <ShareDashboardButton key={`${selectedClient}:${presentationYear}`} clientId={selectedClient} year={presentationYear} disabled={loadingDashboard || loadingYears || !!dashboardError} />
+            {presentationYear !== null && <ShareLinksManager clientId={selectedClient} year={presentationYear} />}
           </div>
         )}
       </div>
@@ -1136,7 +1149,7 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
           <SharedDashboardClientView
             dashboardData={dashboardData}
             clientName={selectedClientName || selectedClientRecord?.nome_cliente || ''}
-            year={selectedYear!}
+            year={presentationYear!}
             comparison={{ years: comparisonYears, data: monthlyComparison }}
             rows={[]}
           />
@@ -1147,11 +1160,10 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
         <div className="glass-card rounded-2xl p-8 text-center">
           <AlertTriangle className="mx-auto h-10 w-10 text-amber-700" />
           <h2 className="mt-4 text-2xl font-bold text-slate-950">
-            Sem histórico para este cliente
+            Sem compras nos anos selecionados
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            O cliente foi selecionado, mas ainda não há linhas importadas suficientes para
-            montar o dashboard.
+            Selecione um ano em que este cliente tenha compras para apresentar os indicadores e gerar o link.
           </p>
         </div>
       )}

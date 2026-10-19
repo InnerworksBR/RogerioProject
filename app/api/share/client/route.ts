@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthenticatedRouteUser } from '@/lib/auth';
 import { requireSameOrigin } from '@/lib/server/requestSecurity';
-import { createShareToken, getShareLinkExpiry } from '@/lib/server/shareLinks';
+import { ClientShareError, createClientShare } from '@/lib/server/clientShare';
 
 export async function GET() {
   const { supabase, user, response } = await requireAuthenticatedRouteUser();
@@ -26,49 +26,17 @@ export async function POST(request: NextRequest) {
   const { supabase, user, response } = await requireAuthenticatedRouteUser();
   if (response || !user) return response ?? NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { clientId, year } = (await request.json().catch(() => ({}))) as {
-    clientId?: string;
-    year?: number;
-  };
-
-  if (!clientId || !Number.isInteger(year) || year! < 2000 || year! > 2100) {
-    return NextResponse.json({ error: 'Cliente e ano sao obrigatorios.' }, { status: 400 });
+  try {
+    const { id, token, expiresAt } = await createClientShare(supabase, user.id, await request.json().catch(() => null));
+    const shareLink = `${request.nextUrl.origin}/shared/client/${token}`;
+    return NextResponse.json({ id, shareLink, expiresAt });
+  } catch (error) {
+    if (error instanceof ClientShareError && error.status < 500) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    console.error('[share.create]', error);
+    return NextResponse.json({ error: error instanceof ClientShareError ? error.message : 'Não foi possível gerar o link. Tente novamente.' }, { status: 500 });
   }
-
-  const { data: resolvedCodes, error: resolveError } = await supabase.rpc('resolve_client_codes', {
-    p_client_key: clientId,
-  });
-  if (resolveError) return NextResponse.json({ error: resolveError.message }, { status: 500 });
-  const clientCodes = ((resolvedCodes ?? []) as Array<{ cod_cliente: string }>).map((item) => item.cod_cliente);
-  if (clientCodes.length === 0) return NextResponse.json({ error: 'Cliente fora do seu escopo.' }, { status: 403 });
-
-  const { count, error: clientError } = await supabase
-    .from('sales_rows')
-    .select('id', { count: 'exact', head: true })
-    .in('cod_cliente', clientCodes)
-    .eq('ano', year!);
-
-  if (clientError) return NextResponse.json({ error: clientError.message }, { status: 500 });
-  if (!count) return NextResponse.json({ error: 'Cliente ou ano fora do seu escopo.' }, { status: 403 });
-
-  const { token, tokenHash } = createShareToken();
-  const expiresAt = getShareLinkExpiry();
-  const { data, error } = await supabase
-    .from('share_links')
-    .insert({
-      user_id: user.id,
-      token_hash: tokenHash,
-      client_id: clientId,
-      year,
-      expires_at: expiresAt,
-    })
-    .select('id')
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  const shareLink = `${request.nextUrl.origin}/shared/client/${token}`;
-  return NextResponse.json({ id: data.id, shareLink, expiresAt });
 }
 
 export async function DELETE(request: NextRequest) {
