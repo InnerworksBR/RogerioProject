@@ -37,6 +37,7 @@ export interface SharedClientDashboardDto {
     month: number;
     label: string;
     revenue: number;
+    previousRevenue: number;
   }>;
   topProducts: Array<{
     cod_referencia: string;
@@ -111,6 +112,9 @@ function buildSharedDashboard(
       month,
       label,
       revenue: currentRows
+        .filter((row) => row.mes === month)
+        .reduce((sum, row) => sum + toNumber(row.valor_total), 0),
+      previousRevenue: previousRows
         .filter((row) => row.mes === month)
         .reduce((sum, row) => sum + toNumber(row.valor_total), 0),
     };

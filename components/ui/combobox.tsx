@@ -20,6 +20,8 @@ export interface ComboboxProps {
   items: ComboboxItem[]
   /** Valor selecionado atualmente (string) */
   value?: string | null
+  /** Nome da seleção quando ela não está no lote atual de resultados. */
+  selectedLabel?: string | null
   /** Chamado quando o usuário seleciona um item */
   onValueChange?: (value: string | null) => void
   /**
@@ -109,6 +111,7 @@ export function Combobox({
   id,
   items,
   value,
+  selectedLabel,
   onValueChange,
   onInputChange,
   placeholder = "Buscar...",
@@ -146,8 +149,10 @@ export function Combobox({
 
   // itemToStringLabel: usado pelo Root para preencher o input ao selecionar
   const itemToStringLabel = React.useCallback(
-    (itemValue: string) => itemMap.get(itemValue)?.label ?? itemValue,
-    [itemMap]
+    (itemValue: string) => itemMap.get(itemValue)?.label
+      ?? (itemValue === value ? selectedLabel : null)
+      ?? itemValue,
+    [itemMap, value, selectedLabel]
   )
 
   const handleValueChange = React.useCallback(

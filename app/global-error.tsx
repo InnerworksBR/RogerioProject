@@ -5,10 +5,10 @@ import { AlertTriangle, RefreshCw } from 'lucide-react'
 
 export default function GlobalError({
   error,
-  unstable_retry,
+  retry,
 }: {
   error: Error & { digest?: string }
-  unstable_retry: () => void
+  retry: () => void
 }) {
   useEffect(() => {
     console.error('[GlobalError]', error.digest ?? error.message)
@@ -59,7 +59,7 @@ export default function GlobalError({
           )}
 
           <button
-            onClick={() => unstable_retry()}
+            onClick={() => retry()}
             className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold transition-all"
             style={{
               background: '#3558c8',

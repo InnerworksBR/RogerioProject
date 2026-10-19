@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ComponentType } from 'react';
 import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -19,14 +20,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { buildClientVisitDashboardFromAggregates } from '@/lib/clientDashboard';
-import {
-  getClientDashboardSummary,
-  getClientMonthlyTrend,
-  getClientRecentOrders,
-  getClientTopProducts,
-  getClientYearlyHistory,
-  searchClients,
-} from '@/lib/reportQueries';
+import { searchClients } from '@/lib/reportQueries';
+import { clientProductsOptions, clientSummaryOptions, clientTrendOptions } from '@/lib/client/clientDashboardQueries';
+import { buildMonthlyTrendComparison } from '@/lib/clientComparison';
 import { normalizeSearchText } from '@/lib/text';
 import { cn } from '@/lib/utils';
 import { useFilterStore } from '@/store/filterStore';
@@ -922,7 +918,7 @@ function ShareDashboardButton({ clientId, year }: { clientId: string; year: numb
 }
 
 export function ClientVisitDashboard({ userId }: { userId: string }) {
-  const { selectedClient, selectedClientName, selectedYear, selectedYears, setClient, setYear, setYears } =
+  const { selectedClient, selectedClientName, selectedYear, selectedYears, setClient, setYears } =
     useFilterStore();
   const { availableYears, loadingYears, yearsError } = useEnsureReportYears();
   const [isPending, startTransition] = useTransition();
@@ -939,10 +935,33 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
   const [clientsError, setClientsError] = useState<string | null>(null);
   const [clientsLoading, setClientsLoading] = useState(false);
 
-  // ── Dashboard principal: histórico canônico completo, calculado uma vez por seleção ──
-  const [dashboardData, setDashboardData] = useState<ClientVisitDashboardData | null>(null);
-  const [loadingDashboard, setLoadingDashboard] = useState(false);
-  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const presentationEnabled = dashboardMode === 'cliente' && !!selectedClient && !!selectedYear;
+  const summaryQuery = useQuery({
+    ...clientSummaryOptions(userId, selectedClient ?? '', selectedYear ?? 0),
+    enabled: presentationEnabled,
+  });
+  const productsQuery = useQuery({
+    ...clientProductsOptions(userId, selectedClient ?? '', selectedYear ?? 0),
+    enabled: presentationEnabled,
+  });
+  const trendQueries = useQueries({
+    queries: comparisonYears.map((year) => ({
+      ...clientTrendOptions(userId, selectedClient ?? '', year),
+      enabled: presentationEnabled,
+    })),
+  });
+  const currentTrend = trendQueries[comparisonYears.indexOf(selectedYear ?? 0)]?.data;
+  const dashboardData = useMemo(() => summaryQuery.data?.length && currentTrend && productsQuery.data
+    ? buildClientVisitDashboardFromAggregates(summaryQuery.data, currentTrend, [], productsQuery.data, [], selectedYear!)
+    : null, [summaryQuery.data, currentTrend, productsQuery.data, selectedYear]);
+  const loadingDashboard = presentationEnabled && (
+    summaryQuery.isPending || productsQuery.isPending || trendQueries.some((query) => query.isPending)
+  ) && !summaryQuery.isError && !productsQuery.isError && !trendQueries.some((query) => query.isError);
+  const dashboardError = summaryQuery.error?.message ?? productsQuery.error?.message
+    ?? trendQueries.find((query) => query.error)?.error?.message ?? null;
+  const monthlyComparison = buildMonthlyTrendComparison(comparisonYears.map((year, index) => ({
+    year, rows: trendQueries[index]?.data ?? [],
+  })));
 
 
   // Busca de clientes com debounce (300 ms) via RPC search_clients
@@ -972,61 +991,6 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
       clearTimeout(timer);
     };
   }, [clientQuery]);
-
-  // A apresentação mantém um ano de referência; a análise tem sua própria carga comparativa.
-  useEffect(() => {
-    let active = true;
-
-    if (dashboardMode !== 'cliente') {
-      setLoadingDashboard(false);
-      return () => { active = false; };
-    }
-
-    if (!selectedClient || !selectedYear) {
-      setDashboardData(null);
-      setDashboardError(null);
-      setLoadingDashboard(false);
-      return () => { active = false; };
-    }
-
-    setLoadingDashboard(true);
-    setDashboardError(null);
-    setDashboardData(null);
-
-    Promise.all([
-      getClientDashboardSummary(selectedClient, selectedYear),
-      getClientMonthlyTrend(selectedClient, selectedYear),
-      getClientYearlyHistory(selectedClient),
-      getClientTopProducts(selectedClient, selectedYear),
-      getClientRecentOrders(selectedClient),
-    ])
-      .then(([summary, trend, history, products, recentOrders]) => {
-        if (!active) return;
-        setDashboardData(summary.length > 0
-          ? buildClientVisitDashboardFromAggregates(
-              summary,
-              trend,
-              history,
-              products,
-              recentOrders,
-              selectedYear
-            )
-          : null);
-      })
-      .catch((error) => {
-        if (!active) return;
-        setDashboardError(
-          error instanceof Error
-            ? error.message
-            : 'Erro ao carregar o dashboard do cliente.'
-        );
-      })
-      .finally(() => {
-        if (active) setLoadingDashboard(false);
-      });
-
-    return () => { active = false; };
-  }, [selectedClient, selectedYear, dashboardMode]);
 
   const selectedClientRecord = useMemo(
     () => clients.find((client) => client.cod_cliente === selectedClient),
@@ -1084,6 +1048,7 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
               sublabel: client.cod_cliente.startsWith('group:') ? 'Consolidado' : client.cod_cliente,
             }))}
             value={selectedClient ?? null}
+            selectedLabel={selectedClientName}
             onInputChange={setClientQuery}
             onValueChange={(cod) => {
               if (!cod) {
@@ -1102,22 +1067,22 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
         {availableYears.length > 0 && (
           <fieldset className="w-full min-w-0 xl:w-auto">
             <legend className="mb-2 text-sm font-semibold text-slate-700">
-              {dashboardMode === 'consultor' ? 'Anos para comparar' : 'Ano da apresentação'}
+              Anos para comparar
             </legend>
             <div className="flex flex-wrap gap-1.5 rounded-xl border border-border bg-white p-1.5">
               {availableYears.slice().sort((a, b) => b - a).map((year) => {
-                const active = dashboardMode === 'consultor' ? comparisonYears.includes(year) : selectedYear === year;
+                const active = comparisonYears.includes(year);
                 return <Button key={year} variant={active ? 'default' : 'ghost'} className="h-11 rounded-lg px-5"
                   aria-pressed={active}
-                  disabled={dashboardMode === 'consultor' && !active && comparisonYears.length >= MAX_COMPARISON_YEARS}
+                  disabled={!active && comparisonYears.length >= MAX_COMPARISON_YEARS}
                   onClick={() => {
-                    if (dashboardMode === 'cliente') { setYear(year); return; }
                     if (active && comparisonYears.length === 1) { toast.info('Mantenha ao menos um ano selecionado.'); return; }
                     setYears(active ? comparisonYears.filter((item) => item !== year) : [...comparisonYears, year]);
                   }}>{year}</Button>;
               })}
             </div>
-            {dashboardMode === 'consultor' && <p className="mt-2 text-xs text-slate-600">Selecione de 1 a {MAX_COMPARISON_YEARS} anos. Clique novamente para remover.</p>}
+            <p className="mt-2 text-xs text-slate-600">Selecione de 1 a {MAX_COMPARISON_YEARS} anos para sobrepor no gráfico. Clique novamente para remover.</p>
+            {dashboardMode === 'cliente' && selectedYear && <p className="mt-1 text-xs text-slate-600">Indicadores e link compartilhado: {selectedYear}.</p>}
           </fieldset>
         )}
 
@@ -1132,6 +1097,11 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
       {(clientsError || yearsError || (dashboardMode === 'cliente' && dashboardError)) && (
         <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">
           {clientsError ?? yearsError ?? (dashboardMode === 'cliente' ? dashboardError : null)}
+          {dashboardMode === 'cliente' && dashboardError && <Button variant="outline" size="sm" className="ml-3" onClick={() => {
+            void summaryQuery.refetch();
+            void productsQuery.refetch();
+            trendQueries.forEach((query) => { void query.refetch(); });
+          }}>Tentar novamente</Button>}
         </div>
       )}
 
@@ -1161,12 +1131,13 @@ export function ClientVisitDashboard({ userId }: { userId: string }) {
         <ClientCommercialAnalysis key={selectedClient} userId={userId} clientId={selectedClient} years={comparisonYears} />
       )}
 
-      {dashboardMode === 'cliente' && selectedClient && !loadingDashboard && !loadingYears && dashboardData && (
+      {dashboardMode === 'cliente' && selectedClient && !loadingDashboard && !loadingYears && !dashboardError && dashboardData && (
         <div className="relative mt-6 overflow-hidden rounded-2xl border border-border">
           <SharedDashboardClientView
             dashboardData={dashboardData}
             clientName={selectedClientName || selectedClientRecord?.nome_cliente || ''}
             year={selectedYear!}
+            comparison={{ years: comparisonYears, data: monthlyComparison }}
             rows={[]}
           />
         </div>

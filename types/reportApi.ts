@@ -50,7 +50,7 @@ export interface ReportYearSummary {
   summary: DashboardSummary | null;
 }
 
-export interface ReportsBootstrapResponse<Row = unknown> {
+export interface ReportsBootstrapResponse {
   requestId: string;
   years: number[];
   selectedYear: number | null;
@@ -58,9 +58,7 @@ export interface ReportsBootstrapResponse<Row = unknown> {
   clients: ReportOption[];
   products: ReportOption[];
   revenueTypes: string[];
-  summary: DashboardSummary | null;
-  summaries: ReportYearSummary[];
-  initialReport: ReportQueryResult<Row>;
+  warnings: string[];
 }
 
 export interface ReportQueryResponse<Row = unknown> extends ReportQueryResult<Row> {

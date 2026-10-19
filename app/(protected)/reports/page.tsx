@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { ReportFilterBar } from '@/components/reports/ReportFilterBar';
 import { SummaryCards } from '@/components/reports/SummaryCards';
 import { ExecutiveSummaryCard } from '@/components/reports/ExecutiveSummaryCard';
@@ -18,7 +17,7 @@ import {
 import { toast } from 'sonner';
 import { useFilterStore } from '@/store/filterStore';
 import { exportAllReports } from '@/lib/exportXlsx';
-import { fetchReportExport, reportQueryKeys, useReportQuery, useReportsBootstrap } from '@/lib/client/reportApi';
+import { fetchReportExport, useReportQuery, useReportsBootstrap } from '@/lib/client/reportApi';
 import { DEFAULT_UI_ROW_LIMIT, MAX_EXPORT_ROW_LIMIT, type ParsedReportRequest, type ReportType } from '@/types/reportApi';
 import type { BaseDeCompraRow, ConfigReportRow, GeralRow, TabelaDinamicaRow } from '@/types/sales';
 
@@ -29,7 +28,6 @@ import { BagagitosView } from '@/components/reports/views/BagagitosView';
 import { GeralView } from '@/components/reports/views/GeralView';
 
 export default function ReportsPage() {
-  const queryClient = useQueryClient();
   const [activeReport, setActiveReport] = useState<ReportType>('tabela_dinamica');
   const {
     selectedYear,
@@ -58,20 +56,9 @@ export default function ReportsPage() {
     if (!bootstrap.data) return;
     setAvailableYears(bootstrap.data.years);
     if (selectedYears.length === 0 && bootstrap.data.selectedYears.length > 0) {
-      const seededRequest = {
-        ...bootstrapRequest,
-        year: bootstrap.data.selectedYear,
-        years: bootstrap.data.selectedYears,
-      };
-      queryClient.setQueryData(reportQueryKeys.query(seededRequest), {
-        ...bootstrap.data.initialReport,
-        requestId: bootstrap.data.requestId,
-        summary: bootstrap.data.summary,
-        summaries: bootstrap.data.summaries,
-      });
       setYears(bootstrap.data.selectedYears);
     }
-  }, [bootstrap.data, bootstrapRequest, queryClient, selectedYears.length, setAvailableYears, setYears]);
+  }, [bootstrap.data, selectedYears.length, setAvailableYears, setYears]);
 
   const reportRequest = useMemo<ParsedReportRequest>(() => ({
     report: activeReport,
@@ -83,14 +70,15 @@ export default function ReportsPage() {
     revenueType: selectedRevenueType,
     limit: DEFAULT_UI_ROW_LIMIT,
   }), [activeReport, selectedYear, selectedYears, selectedClient, selectedProduct, selectedSemester, selectedRevenueType]);
-  const reportQuery = useReportQuery(reportRequest, bootstrap.isSuccess && selectedYears.length > 0);
+  const reportQuery = useReportQuery(reportRequest, selectedYears.length > 0);
   const queryError = reportQuery.error instanceof Error
     ? reportQuery.error.message
-    : bootstrap.error instanceof Error
+    : selectedYears.length === 0 && bootstrap.error instanceof Error
       ? bootstrap.error.message
       : null;
   const rows = reportQuery.data?.rows ?? [];
-  const loading = bootstrap.isPending || (selectedYears.length > 0 && (reportQuery.isPending || reportQuery.isFetching));
+  const loading = (bootstrap.isPending && selectedYears.length === 0)
+    || (selectedYears.length > 0 && (reportQuery.isPending || reportQuery.isFetching));
   const truncated = reportQuery.data?.truncated ?? false;
 
   return (
@@ -114,15 +102,20 @@ export default function ReportsPage() {
         initialProducts={bootstrap.data?.products ?? []}
         revenueTypes={bootstrap.data?.revenueTypes ?? []}
         error={bootstrap.error instanceof Error ? bootstrap.error.message : null}
+        warnings={bootstrap.data?.warnings}
+        onRetry={() => void bootstrap.refetch()}
       />
 
       {/* KPI cards */}
       <SummaryCards
-        data={selectedYear ? reportQuery.data?.summary ?? bootstrap.data?.summary ?? null : null}
-        summaries={reportQuery.data?.summaries ?? bootstrap.data?.summaries ?? []}
+        data={selectedYear ? reportQuery.data?.summary ?? null : null}
+        summaries={reportQuery.data?.summaries ?? []}
         loading={loading}
         error={queryError}
       />
+      {reportQuery.isError && (
+        <Button variant="outline" onClick={() => void reportQuery.refetch()}>Tentar carregar o relatório novamente</Button>
+      )}
       <ExecutiveSummaryCard />
 
       {/* Tabs Layout */}

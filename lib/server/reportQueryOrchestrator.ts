@@ -183,9 +183,7 @@ export async function getReportsBootstrap(
     selectedYears.push(years.at(-1) as number);
   }
   const selectedYear = selectedYears.at(-1) ?? null;
-  const effectiveRequest = { ...request, year: selectedYear, years: selectedYears };
-
-  const [clients, products, revenueTypes] = await Promise.all([
+  const [clientsResult, productsResult, revenueTypesResult] = await Promise.allSettled([
     measureQuery(
       { requestId, operation: 'reports.clients' },
       () => findClientsForSupabase(supabase, '', 40),
@@ -203,12 +201,16 @@ export async function getReportsBootstrap(
     ),
   ]);
 
-  // As opcoes fazem leituras amplas. So iniciamos as agregacoes principais
-  // depois que elas terminam para nao saturar o pool pequeno do Postgres.
-  const [summaries, initialReport] = await Promise.all([
-    getSummaries(supabase, requestId, effectiveRequest),
-    executeReportQuery(supabase, requestId, effectiveRequest, years),
-  ]);
+  // A falha de uma lista auxiliar não bloqueia os demais filtros nem o relatório.
+  // Agregações são consultadas somente pelo endpoint do relatório selecionado.
+  const clients = clientsResult.status === 'fulfilled' ? clientsResult.value : [];
+  const products = productsResult.status === 'fulfilled' ? productsResult.value : [];
+  const revenueTypes = revenueTypesResult.status === 'fulfilled' ? revenueTypesResult.value : [];
+  const warnings = [
+    ...(clientsResult.status === 'rejected' ? ['Não foi possível carregar a lista inicial de clientes. Pesquise pelo nome para tentar novamente.'] : []),
+    ...(productsResult.status === 'rejected' ? ['Não foi possível carregar a lista inicial de produtos. Pesquise pelo código ou descrição para tentar novamente.'] : []),
+    ...(revenueTypesResult.status === 'rejected' ? ['Não foi possível carregar os tipos de receita. Tente novamente para atualizar essa lista.'] : []),
+  ];
 
   const clientOptions: ReportOption[] = clients.map((client) => ({
     value: client.cod_cliente,
@@ -229,9 +231,7 @@ export async function getReportsBootstrap(
     clients: clientOptions,
     products: productOptions,
     revenueTypes,
-    summary: summaries.at(-1)?.summary ?? null,
-    summaries,
-    initialReport,
+    warnings,
   };
 }
 

@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 const {
-  buildMonthlyComparison, buildProductComparison, buildComparisonOpportunities, comparisonDelta,
+  buildMonthlyComparison, buildMonthlyTrendComparison, buildProductComparison, buildComparisonOpportunities, comparisonDelta,
 } = await import(pathToFileURL(path.join(process.cwd(), 'lib/clientComparison.ts')).href);
 
 const row = (overrides = {}) => ({
@@ -26,6 +26,27 @@ test('monthly comparison uses the explicitly selected, nonconsecutive years', ()
   });
   assert.deepEqual(points[11].values[2026], { revenue: 0, units: 0, orders: 0 });
   assert.equal(points[0].values[2025], undefined);
+});
+
+test('presentation overlays selected years without mixing in the previous-year RPC rows', () => {
+  const points = buildMonthlyTrendComparison([
+    { year: 2024, rows: [
+      { ano: 2024, mes: 3, total_faturado: 120, total_unidades: 4, total_pedidos: 2 },
+      { ano: 2023, mes: 3, total_faturado: 900, total_unidades: 30, total_pedidos: 9 },
+    ] },
+    { year: 2026, rows: [
+      { ano: 2026, mes: 3, total_faturado: '350', total_unidades: '7', total_pedidos: '3' },
+      { ano: 2025, mes: 3, total_faturado: 999, total_unidades: 99, total_pedidos: 9 },
+      { ano: 2026, mes: 13, total_faturado: 999 },
+    ] },
+  ]);
+  assert.equal(points.length, 12);
+  assert.deepEqual(points[2].values, {
+    2024: { revenue: 120, units: 4, orders: 2 },
+    2026: { revenue: 350, units: 7, orders: 3 },
+  });
+  assert.deepEqual(points[0].values[2026], { revenue: 0, units: 0, orders: 0 });
+  assert.equal(points[2].values[2025], undefined);
 });
 
 test('product totals exclude unselected years and preserve missing-year zeros', () => {

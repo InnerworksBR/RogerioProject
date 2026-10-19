@@ -82,7 +82,10 @@ test('canonical clients are tenant-scoped, unique and managed atomically by lead
 
 test('canonical client dashboard keeps aggregate loading and defers raw chronology', async () => {
   const dashboard = await read('components/client-dashboard/ClientVisitDashboard.tsx');
-  assert.match(dashboard, /Promise\.all\(\[/);
+  assert.match(dashboard, /useQueries\(/);
+  assert.match(dashboard, /clientSummaryOptions/);
+  assert.match(dashboard, /clientTrendOptions/);
+  assert.doesNotMatch(dashboard, /getClientYearlyHistory|getClientRecentOrders/);
   assert.match(dashboard, /buildClientVisitDashboardFromAggregates/);
   const comparison = await read('components/client-dashboard/ClientCommercialAnalysis.tsx');
   assert.match(comparison, /enabled: activeTab !== 'resumo'/);

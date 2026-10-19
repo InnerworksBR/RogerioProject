@@ -1,4 +1,4 @@
-import type { ClientSalesRow, ClientVisitDashboardData } from '../types/clientDashboard';
+import type { ClientMonthlyTrendRow, ClientSalesRow, ClientVisitDashboardData } from '../types/clientDashboard';
 
 export type ComparisonMetric = 'revenue' | 'units' | 'orders';
 export interface ClientYearDataset {
@@ -42,6 +42,24 @@ export function buildMonthlyComparison(datasets: ClientYearDataset[]): Compariso
         revenue: point.revenue,
         units: point.units,
         orders: point.orders,
+      };
+    }
+  }
+  return months;
+}
+
+export function buildMonthlyTrendComparison(
+  datasets: { year: number; rows: ClientMonthlyTrendRow[] }[]
+): ComparisonMonth[] {
+  const months = createComparisonMonths(datasets.map(({ year }) => year));
+  for (const { year, rows } of datasets) {
+    // A RPC também traz o ano anterior; ele não deve sobrescrever o escolhido.
+    for (const row of rows) {
+      if (row.ano !== year || row.mes < 1 || row.mes > 12) continue;
+      months[row.mes - 1].values[year] = {
+        revenue: Number(row.total_faturado ?? 0),
+        units: Number(row.total_unidades ?? 0),
+        orders: Number(row.total_pedidos ?? 0),
       };
     }
   }

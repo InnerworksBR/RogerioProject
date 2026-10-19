@@ -22,7 +22,9 @@ import {
   getDeltaLabel
 } from '@/components/client-dashboard/ClientVisitDashboard';
 import type { SharedClientDashboardDto } from '@/lib/server/shareLinks';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import type { ComparisonMonth } from '@/lib/clientComparison';
+import { InteractiveComparisonChart } from '@/components/client-dashboard/InteractiveComparisonChart';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 
 type SharedDashboardViewData =
   Omit<SharedClientDashboardDto, 'clientName' | 'year'> &
@@ -32,13 +34,15 @@ export function SharedDashboardClientView({
   dashboardData,
   clientName = dashboardData.clientName ?? '',
   year = dashboardData.year ?? 0,
-  aiSummary
+  aiSummary,
+  comparison,
 }: {
   dashboardData: SharedDashboardViewData;
   clientName?: string;
   year?: number;
   rows?: unknown;
   aiSummary?: any;
+  comparison?: { years: number[]; data: ComparisonMonth[] };
 }) {
   
   const containerVariants: Variants = {
@@ -186,11 +190,11 @@ export function SharedDashboardClientView({
           className="space-y-8"
         >
           <motion.div variants={itemVariants}>
-            <h2 className="text-3xl font-bold text-slate-900">Sua Jornada de Compras em {year}</h2>
-            <p className="text-slate-600 mt-2 text-lg">Distribuição do faturamento ao longo dos meses.</p>
+            <h2 className="text-3xl font-bold text-slate-900">Sua Jornada de Compras {comparison && comparison.years.length > 1 ? `em ${comparison.years.join(' × ')}` : `em ${year}`}</h2>
+            <p className="text-slate-600 mt-2 text-lg">{comparison && comparison.years.length > 1 ? 'Anos sobrepostos no mesmo gráfico para comparar as compras mês a mês.' : 'Distribuição do faturamento ao longo dos meses, comparada ao ano anterior.'}</p>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="glass p-6 sm:p-8 rounded-3xl h-[400px]">
+          {comparison ? <InteractiveComparisonChart data={comparison.data} years={comparison.years} title="Comparativo mensal de compras" /> : <motion.div variants={itemVariants} className="glass p-6 sm:p-8 rounded-3xl h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dashboardData.monthlyTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
@@ -211,13 +215,15 @@ export function SharedDashboardClientView({
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#ffffff', borderColor: '#dce3ee', borderRadius: '12px', color: '#17243c' }}
                   itemStyle={{ color: '#3558c8' }}
-                  formatter={(value) => [fmtBRL(Number(value ?? 0)), 'Faturamento']}
+                  formatter={(value, name) => [fmtBRL(Number(value ?? 0)), name]}
                   labelStyle={{ color: '#52627a', marginBottom: '4px' }}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#3558c8" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                <Legend />
+                <Area type="monotone" dataKey="previousRevenue" name={String(year - 1)} stroke="#0e8075" strokeWidth={2} strokeDasharray="6 4" fill="none" />
+                <Area type="monotone" dataKey="revenue" name={String(year)} stroke="#3558c8" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
             </ResponsiveContainer>
-          </motion.div>
+          </motion.div>}
         </motion.section>
 
         {/* Products Showcase */}

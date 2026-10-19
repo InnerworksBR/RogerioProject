@@ -5,10 +5,10 @@ import { AlertTriangle, RefreshCw } from 'lucide-react'
 
 export default function ProtectedError({
   error,
-  unstable_retry,
+  retry,
 }: {
   error: Error & { digest?: string }
-  unstable_retry: () => void
+  retry: () => void
 }) {
   useEffect(() => {
     console.error('[ProtectedError]', error.digest ?? error.message)
@@ -37,7 +37,7 @@ export default function ProtectedError({
         )}
 
         <button
-          onClick={() => unstable_retry()}
+          onClick={() => retry()}
           className="inline-flex items-center gap-2 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 px-6 py-3 text-sm font-semibold text-indigo-700 transition-all hover:bg-indigo-500/30 hover:text-slate-900"
         >
           <RefreshCw className="h-4 w-4" />

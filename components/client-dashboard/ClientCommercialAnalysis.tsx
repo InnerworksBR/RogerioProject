@@ -11,7 +11,8 @@ import {
   buildComparisonOpportunities, buildMonthlyComparison, buildProductComparison, comparisonDelta,
   type ClientYearDataset, type ComparisonProduct,
 } from '@/lib/clientComparison';
-import { getClientDashboardSummary, getClientMonthlyTrend, getClientSalesHistory } from '@/lib/reportQueries';
+import { getClientSalesHistory } from '@/lib/reportQueries';
+import { clientSummaryOptions, clientTrendOptions } from '@/lib/client/clientDashboardQueries';
 import { normalizeSearchText } from '@/lib/text';
 import { cn } from '@/lib/utils';
 import { InteractiveComparisonChart, formatComparisonValue, YEAR_COLORS } from './InteractiveComparisonChart';
@@ -190,7 +191,8 @@ export function ClientCommercialAnalysis({ userId, clientId, years }: { userId: 
           queryKey: ['reports', 'client-commercial-year', userId, clientId, year], staleTime: 30_000,
           queryFn: async () => {
             const [summary, trend] = await Promise.all([
-              getClientDashboardSummary(clientId, year), getClientMonthlyTrend(clientId, year),
+              queryClient.fetchQuery(clientSummaryOptions(userId, clientId, year)),
+              queryClient.fetchQuery(clientTrendOptions(userId, clientId, year)),
             ]);
             return buildClientVisitDashboardFromAggregates(summary, trend, [], [], [], year);
           },

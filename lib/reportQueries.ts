@@ -335,12 +335,14 @@ const ORDER_NUMERIC = ['total_faturado', 'total_unidades', 'total_linhas'];
 
 export async function getClientDashboardSummary(
   codCliente: string,
-  ano: number
+  ano: number,
+  signal?: AbortSignal
 ): Promise<ClientDashboardSummaryRow[]> {
-  const { data, error } = await db().rpc('client_dashboard_summary', {
+  const query = db().rpc('client_dashboard_summary', {
     p_cod_cliente: codCliente,
     p_ano: ano,
   });
+  const { data, error } = await (signal ? query.abortSignal(signal) : query);
   if (error) throw normalizeDbError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(
     (r) => normalizeRow(r, SUMMARY_NUMERIC) as unknown as ClientDashboardSummaryRow
@@ -349,12 +351,14 @@ export async function getClientDashboardSummary(
 
 export async function getClientMonthlyTrend(
   codCliente: string,
-  ano: number
+  ano: number,
+  signal?: AbortSignal
 ): Promise<ClientMonthlyTrendRow[]> {
-  const { data, error } = await db().rpc('client_monthly_trend', {
+  const query = db().rpc('client_monthly_trend', {
     p_cod_cliente: codCliente,
     p_ano: ano,
   });
+  const { data, error } = await (signal ? query.abortSignal(signal) : query);
   if (error) throw normalizeDbError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(
     (r) => normalizeRow(r, TREND_NUMERIC) as unknown as ClientMonthlyTrendRow
@@ -375,13 +379,15 @@ export async function getClientYearlyHistory(
 
 export async function getClientTopProducts(
   codCliente: string,
-  ano: number
+  ano: number,
+  signal?: AbortSignal
 ): Promise<ClientTopProductRow[]> {
-  const { data, error } = await db().rpc('client_top_products', {
+  const query = db().rpc('client_top_products', {
     p_cod_cliente: codCliente,
     p_ano: ano,
     p_limit: 100,
   });
+  const { data, error } = await (signal ? query.abortSignal(signal) : query);
   if (error) throw normalizeDbError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(
     (r) => normalizeRow(r, PRODUCT_NUMERIC) as unknown as ClientTopProductRow

@@ -25,11 +25,15 @@ export function ReportFilterBar({
   initialProducts,
   revenueTypes,
   error,
+  warnings = [],
+  onRetry,
 }: {
   initialClients: ReportOption[];
   initialProducts: ReportOption[];
   revenueTypes: string[];
   error?: string | null;
+  warnings?: string[];
+  onRetry?: () => void;
 }) {
   const {
     selectedYears,
@@ -132,6 +136,7 @@ export function ReportFilterBar({
             placeholder="Todos os clientes · pesquisar..."
             items={clients.map((item) => item.value.startsWith('group:') ? { ...item, sublabel: 'Consolidado' } : item)}
             value={selectedClient}
+            selectedLabel={selectedClientName}
             onInputChange={setClientQuery}
             onValueChange={(value) => {
               const client = clients.find((item) => item.value === value);
@@ -175,10 +180,14 @@ export function ReportFilterBar({
         </div>
       )}
 
-      {error && (
-        <p className="mt-4 text-xs font-medium text-amber-700">
-          Não foi possível carregar os filtros automaticamente: {error}
-        </p>
+      {(error || warnings.length > 0 || clientsQuery.isError || productsQuery.isError) && (
+        <div role="alert" className="mt-4 space-y-2 text-sm font-medium text-amber-700">
+          {error && <p>Não foi possível carregar os filtros automaticamente: {error}</p>}
+          {warnings.map((warning) => <p key={warning}>{warning}</p>)}
+          {clientsQuery.isError && <p>Não foi possível pesquisar clientes. Tente digitar o nome novamente.</p>}
+          {productsQuery.isError && <p>Não foi possível pesquisar produtos. Tente digitar o código ou descrição novamente.</p>}
+          {onRetry && <Button variant="outline" size="sm" onClick={onRetry}>Tentar carregar os filtros novamente</Button>}
+        </div>
       )}
     </section>
   );

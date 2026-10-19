@@ -90,7 +90,9 @@ export function useReportQuery(request: ParsedReportRequest, enabled: boolean) {
     queryKey: reportQueryKeys.query(request),
     queryFn: ({ signal }) => fetchReportQuery(request, signal),
     enabled,
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData) => previousData?.report === request.report
+      ? keepPreviousData(previousData)
+      : undefined,
   });
 }
 

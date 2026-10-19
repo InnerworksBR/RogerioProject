@@ -217,24 +217,14 @@ export async function findProductsForSupabase(
   limit = 40
 ): Promise<{ cod_referencia: string; descr_produto: string }[]> {
   const boundedLimit = Math.min(Math.max(limit, 1), 100);
-  const { data, error } = await supabase
-    .rpc('product_catalog', {})
-    .limit(Math.min(boundedLimit * 5, 500));
+  const { data, error } = await supabase.rpc('search_products', {
+    p_query: search.trim(),
+    p_limit: boundedLimit,
+  });
 
   if (error) throw normalizeDbError(error);
 
-  const query = search.trim().toLocaleLowerCase('pt-BR');
-  return ((data ?? []) as ProductCatalogRow[])
-    .filter((row) => {
-      if (!query) return true;
-      return row.cod_referencia?.toLocaleLowerCase('pt-BR').includes(query)
-        || row.descr_produto?.toLocaleLowerCase('pt-BR').includes(query);
-    })
-    .slice(0, boundedLimit)
-    .map((row) => ({
-      cod_referencia: row.cod_referencia,
-      descr_produto: row.descr_produto,
-    }));
+  return (data ?? []) as { cod_referencia: string; descr_produto: string }[];
 }
 
 export async function getRevenueTypesForSupabase(
@@ -242,18 +232,14 @@ export async function getRevenueTypesForSupabase(
   limit = 100
 ): Promise<string[]> {
   const boundedLimit = Math.min(Math.max(limit, 1), 200);
-  const { data, error } = await supabase
-    .from('sales_rows')
-    .select('descr_hist_financ')
-    .not('descr_hist_financ', 'is', null)
-    .order('descr_hist_financ', { ascending: true })
-    .limit(1_000);
+  const { data, error } = await supabase.rpc('get_report_revenue_types');
 
   if (error) throw normalizeDbError(error);
+  const rows = (data ?? []) as { descr_hist_financ: string }[];
 
   return Array.from(new Set(
-    (data ?? [])
-      .map((row) => row.descr_hist_financ?.trim())
+    rows
+      .map((row) => row.descr_hist_financ)
       .filter((value): value is string => Boolean(value))
   )).slice(0, boundedLimit);
 }
